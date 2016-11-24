@@ -91,7 +91,7 @@ class Robot(object):
         states = integrate.odeint(self._dynamics, self._state, t)
         return states
 
-    def move(self, dt=0.05, controller=None):
+    def move(self, dt=1.0/30.0, controller=None):
         """Moves the robot by a given time step.
 
         Args:
