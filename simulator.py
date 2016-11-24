@@ -34,8 +34,9 @@ class Simulator(object):
         vis.showPolyData(self._world.to_polydata(), "world")
 
         # Add robot to view.
+        robot_color = [0.4, 0.85098039, 0.9372549]
         om.removeFromObjectModel(om.findObjectByName("robot"))
-        vis.showPolyData(self._robot.to_polydata(), "robot")
+        vis.showPolyData(self._robot.to_polydata(), "robot", color=robot_color)
 
     def display(self):
         """Launches and displays the simulator."""
