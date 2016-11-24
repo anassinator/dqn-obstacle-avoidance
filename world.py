@@ -68,7 +68,7 @@ class World(object):
         """Adds randomly scattered obstacles to the world.
 
         Args:
-            density: Obstacle to world area ratio, default: 0.2.
+            density: Obstacle to world area ratio, default: 0.1.
             seed: Random seed, default: None.
 
         Returns:
