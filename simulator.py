@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from robot import Robot
 from world import World
 from PythonQt import QtGui
 from director import applogic
@@ -12,12 +13,14 @@ class Simulator(object):
 
     """Simulator."""
 
-    def __init__(self, world):
+    def __init__(self, robot, world):
         """Constructs the simulator.
 
         Args:
+            robot: Robot.
             world: World.
         """
+        self._robot = robot
         self._world = world
         self._app = ConsoleApp()
         self._view = self._app.createView(useGrid=False)
@@ -29,6 +32,10 @@ class Simulator(object):
         # Add world to view.
         om.removeFromObjectModel(om.findObjectByName("world"))
         vis.showPolyData(self._world.to_polydata(), "world")
+
+        # Add robot to view.
+        om.removeFromObjectModel(om.findObjectByName("robot"))
+        vis.showPolyData(self._robot.to_polydata(), "robot")
 
     def display(self):
         """Launches and displays the simulator."""
@@ -44,6 +51,7 @@ class Simulator(object):
 
 
 if __name__ == "__main__":
+    robot = Robot()
     world = World(120, 100).add_obstacles()
-    sim = Simulator(world)
+    sim = Simulator(robot, world)
     sim.display()
