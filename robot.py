@@ -10,7 +10,7 @@ class Robot(object):
 
     """Robot."""
 
-    def __init__(self, velocity=12.0, scale=0.04, model="celica.obj"):
+    def __init__(self, velocity=12.0, scale=0.20, model="A10.obj"):
         """Constructs a Robot.
 
         Args:
@@ -22,7 +22,8 @@ class Robot(object):
         self._velocity = velocity
 
         t = vtk.vtkTransform()
-        t.RotateZ(90)
+        t.RotateX(90)
+        t.RotateY(-90)
         t.Scale(scale, scale, scale)
         polydata = ioUtils.readPolyData(model)
         self._polydata = filterUtils.transformPolyData(polydata, t)

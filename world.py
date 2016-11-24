@@ -39,7 +39,7 @@ class World(object):
         for start, end in zip(corners, corners[1:]):
             self._data.addLine(start, end, radius=0.2)
 
-    def _add_obstacle(self, x, y, radius, height=0.4):
+    def _add_obstacle(self, x, y, radius, height=1.0):
         """Adds a cylindrical obstacle to the world.
 
         Args:
