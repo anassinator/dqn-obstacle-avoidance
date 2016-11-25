@@ -68,10 +68,15 @@ class Robot(object):
         Returns:
             Derivative of state at t.
         """
+        if controller:
+            yaw = controller(state, t)
+        else:
+            yaw = self._velocity * np.sin(t)
+
         dqdt = np.zeros_like(state)
         dqdt[0] = self._velocity * np.cos(state[2])
         dqdt[1] = self._velocity * np.sin(state[2])
-        dqdt[2] = controller(state, t) if controller else np.sin(t)
+        dqdt[2] = yaw
         return dqdt
 
     def _simulate(self, dt, controller, start_time=0.0, steps=1):
