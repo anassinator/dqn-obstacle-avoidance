@@ -60,6 +60,8 @@ class Simulator(object):
         Args:
             robot: Robot.
         """
+        robot.sensor.set_locator(self.locator)
+
         color = [0.4, 0.85098039, 0.9372549]
         frame_name = "robot{}".format(len(self._robots))
         frame = self._add_polydata(robot.to_polydata(), frame_name, color)
@@ -106,7 +108,7 @@ class Simulator(object):
 
         vis.updatePolyData(d.getPolyData(), 'rays', colorByName='RGB255')
 
-    def _update_locator(self):
+    def update_locator(self):
         d = DebugData()
 
         d.addPolyData(self._world.to_polydata())
@@ -142,11 +144,11 @@ class Simulator(object):
             obstacle.move()
             self._update_moving_object(obstacle, frame)
 
-        self._update_locator()
+        # self._update_locator()
 
         for robot, frame in self._robots:
             robot.move()
-            robot.sensor.set_locator(self.locator)
+            # robot.sensor.set_locator(self.locator)
             robot.update_sensor()
             self._update_moving_object(robot, frame)
             self._update_sensor(robot, robot.sensor)
@@ -155,7 +157,8 @@ class Simulator(object):
 if __name__ == "__main__":
     world = World(120, 100)
     sim = Simulator(world)
-    sim.add_robot(Robot(world))
     for obstacle in world.generate_obstacles(moving_obstacle_ratio=0.0):
         sim.add_obstacle(obstacle)
+    sim.update_locator()
+    sim.add_robot(Robot(world))
     sim.run()

@@ -8,7 +8,7 @@ import director.vtkAll as vtk
 class Sensor(object):
 
     def __init__(self, world, num_rays=20, radius=8,
-                 min_angle=-90, max_angle=90):
+                 min_angle=0, max_angle=360):
 
         self.num_rays = num_rays
         self.radius = radius
@@ -43,11 +43,11 @@ class Sensor(object):
             np.array([
                 math.cos(
                     theta + self.min_angle + i *
-                    (self.max_angle - self.min_angle) / (self.num_rays - 1)
+                    (self.max_angle - self.min_angle) / self.num_rays
                 ) * self.radius,
                 math.sin(
                     theta + self.min_angle + i *
-                    (self.max_angle - self.min_angle) / (self.num_rays - 1)
+                    (self.max_angle - self.min_angle) / self.num_rays
                 ) * self.radius,
                 0
             ])
