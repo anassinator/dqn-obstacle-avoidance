@@ -16,18 +16,16 @@ class Simulator(object):
 
     """Simulator."""
 
-    def __init__(self, robot, world):
+    def __init__(self, world):
         """Constructs the simulator.
 
         Args:
-            robot: Robot.
             world: World.
         """
-        self._robot = robot
+        self._robots = []
         self._world = world
         self._app = ConsoleApp()
         self._view = self._app.createView(useGrid=False)
-        self._robot_frame = None
 
         self._initialize()
 
@@ -37,20 +35,33 @@ class Simulator(object):
         om.removeFromObjectModel(om.findObjectByName("world"))
         vis.showPolyData(self._world.to_polydata(), "world")
 
-        # Add robot to view.
-        robot_color = [0.4, 0.85098039, 0.9372549]
-        om.removeFromObjectModel(om.findObjectByName("robot"))
-        self._robot_frame = vis.showPolyData(self._robot.to_polydata(),
-                                             "robot", color=robot_color)
-        vis.addChildFrame(self._robot_frame)
-        self._update_robot()
+    def add_robot(self, robot):
+        """Adds a robot to the simulation.
 
-    def _update_robot(self):
-        """Updates robot's state."""
+        Args:
+            robot: Robot.
+        """
+        robot_color = [0.4, 0.85098039, 0.9372549]
+        frame_name = "robot{}".format(len(self._robots))
+        om.removeFromObjectModel(om.findObjectByName(frame_name))
+        frame = vis.showPolyData(robot.to_polydata(), frame_name,
+                                 color=robot_color)
+
+        self._robots.append((robot, frame))
+        vis.addChildFrame(frame)
+        self._update_robot(robot, frame)
+
+    def _update_robot(self, robot, frame):
+        """Updates robot's state.
+
+        Args:
+            robot: Robot.
+            frame: Corresponding frame.
+        """
         t = vtk.vtkTransform()
-        t.Translate(self._robot.x, self._robot.y, 0.0)
-        t.RotateZ(np.degrees(self._robot.theta))
-        self._robot_frame.getChildFrame().copyFrame(t)
+        t.Translate(robot.x, robot.y, 0.0)
+        t.RotateZ(np.degrees(robot.theta))
+        frame.getChildFrame().copyFrame(t)
 
     def run(self):
         """Launches and displays the simulator."""
@@ -71,11 +82,13 @@ class Simulator(object):
 
     def tick(self):
         """Update simulation clock."""
-        self._robot.move()
-        self._update_robot()
+        for robot, frame in self._robots:
+            robot.move()
+            self._update_robot(robot, frame)
+
 
 if __name__ == "__main__":
-    robot = Robot()
     world = World(120, 100).add_obstacles()
-    sim = Simulator(robot, world)
+    sim = Simulator(world)
+    sim.add_robot(Robot())
     sim.run()
