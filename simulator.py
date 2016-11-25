@@ -106,6 +106,19 @@ class Simulator(object):
 
         vis.updatePolyData(d.getPolyData(), 'rays', colorByName='RGB255')
 
+    def _update_locator(self):
+        d = DebugData()
+
+        d.addPolyData(self._world.to_polydata())
+
+        for obstacle, frame in self._obstacles:
+            d.addCylinder([obstacle.x, obstacle.y, obstacle.height / 2],
+                          obstacle.axis, obstacle.height, obstacle.radius)
+
+        self.locator = vtk.vtkCellLocator()
+        self.locator.SetDataSet(d.getPolyData())
+        self.locator.BuildLocator()
+
     def run(self):
         """Launches and displays the simulator."""
         widget = QtGui.QWidget()
@@ -125,15 +138,18 @@ class Simulator(object):
 
     def tick(self):
         """Update simulation clock."""
-        for robot, frame in self._robots:
-            robot.move()
-            robot.update_sensor()
-            self._update_moving_object(robot, frame)
-            self._update_sensor(robot, robot.sensor)
-
         for obstacle, frame in self._obstacles:
             obstacle.move()
             self._update_moving_object(obstacle, frame)
+
+        self._update_locator()
+
+        for robot, frame in self._robots:
+            robot.move()
+            robot.sensor.set_locator(self.locator)
+            robot.update_sensor()
+            self._update_moving_object(robot, frame)
+            self._update_sensor(robot, robot.sensor)
 
 
 if __name__ == "__main__":

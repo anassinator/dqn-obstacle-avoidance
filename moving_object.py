@@ -121,7 +121,7 @@ class Robot(MovingObject):
 
     """Robot."""
 
-    def __init__(self, world, velocity=4.0, scale=0.20, model="A10.obj"):
+    def __init__(self, world, velocity=12.0, scale=0.20, model="A10.obj"):
         """Constructs a Robot.
 
         Args:
@@ -153,8 +153,10 @@ class Obstacle(MovingObject):
             radius: Radius of the obstacle.
         """
         data = DebugData()
-        center = [0, 0, height / 2 - 0.5]
-        axis = [0, 0, 1]  # Upright cylinder.
-        data.addCylinder(center, axis, height, radius)
+        self.radius = radius
+        self.height = height
+        self.center = [0, 0, height / 2 - 0.5]
+        self.axis = [0, 0, 1]  # Upright cylinder.
+        data.addCylinder(self.center, self.axis, height, radius)
         polydata = data.getPolyData()
         super(Obstacle, self).__init__(velocity, polydata)

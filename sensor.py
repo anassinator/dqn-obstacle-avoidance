@@ -3,7 +3,6 @@
 import math
 import numpy as np
 import director.vtkAll as vtk
-import director.objectmodel as om
 
 
 class Sensor(object):
@@ -25,6 +24,9 @@ class Sensor(object):
         self.intersections = [[0, 0, 0] for i in range(self.num_rays)]
 
         self._update_rays(0)
+
+    def set_locator(self, locator):
+        self.locator = locator
 
     def update(self, x, y, theta):
         self._update_rays(theta)
