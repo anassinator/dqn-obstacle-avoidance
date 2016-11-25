@@ -64,7 +64,7 @@ class World(object):
         """
         return (max_v - min_v) * np.random.random_sample() + min_v
 
-    def add_obstacles(self, density=0.1, seed=None):
+    def add_obstacles(self, density=0.05, seed=None):
         """Adds randomly scattered obstacles to the world.
 
         Args:
