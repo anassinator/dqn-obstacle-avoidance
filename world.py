@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*=
 
 import numpy as np
+from moving_object import Obstacle
 from director.debugVis import DebugData
 
 
@@ -39,19 +40,6 @@ class World(object):
         for start, end in zip(corners, corners[1:]):
             self._data.addLine(start, end, radius=0.2)
 
-    def _add_obstacle(self, x, y, radius, height=1.0):
-        """Adds a cylindrical obstacle to the world.
-
-        Args:
-            x: X-coordinate of the center of the obstacle.
-            y: Y-coordinate of the center of the obstacle.
-            radius: Radius of the cylinder.
-            height: Height of the cylinder.
-        """
-        center = [x, y, height / 2]
-        axis = [0, 0, 1]  # Upright cylinder.
-        self._data.addCylinder(center, axis, height, radius)
-
     def _random_in_range(self, min_v, max_v):
         """Generate random value in a given range using a uniform distribution.
 
@@ -64,15 +52,18 @@ class World(object):
         """
         return (max_v - min_v) * np.random.random_sample() + min_v
 
-    def add_obstacles(self, density=0.1, seed=None):
-        """Adds randomly scattered obstacles to the world.
+    def generate_obstacles(self, density=0.05, moving_obstacle_ratio=0.20,
+                           seed=None):
+        """Generates randomly scattered obstacles to the world.
 
         Args:
             density: Obstacle to world area ratio, default: 0.1.
+            moving_obstacle_ratio: Ratio of moving to stationary obstacles,
+                default: 0.2.
             seed: Random seed, default: None.
 
-        Returns:
-            Same world.
+        Yields:
+            Obstacle.
         """
         if seed is not None:
             np.random.seed(seed)
@@ -86,10 +77,18 @@ class World(object):
             center_y_range = (self._y_min + radius, self._y_max - radius)
             center_x = self._random_in_range(*center_x_range)
             center_y = self._random_in_range(*center_y_range)
-            self._add_obstacle(center_x, center_y, radius)
             obstacle_area -= np.pi * radius ** 2
 
-        return self
+            # Only some obstacles should be moving.
+            if np.random.random_sample() >= moving_obstacle_ratio:
+                velocity = 0.0
+            else:
+                velocity = self._random_in_range(-30.0, 30.0)
+
+            obstacle = Obstacle(velocity, radius)
+            obstacle.x = center_x
+            obstacle.y = center_y
+            yield obstacle
 
     def to_polydata(self):
         """Converts world to visualizable poly data."""

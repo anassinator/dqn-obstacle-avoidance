@@ -1,11 +1,10 @@
 # -*- coding: utf-8 -*-
 
 import numpy as np
-from robot import Robot
 from world import World
-from sensor import Sensor
 from PythonQt import QtGui
 from director import applogic
+from moving_object import Robot
 from director import vtkAll as vtk
 from director import objectmodel as om
 from director import visualization as vis
@@ -18,19 +17,17 @@ class Simulator(object):
 
     """Simulator."""
 
-    def __init__(self, robot, world, sensor):
+    def __init__(self, world):
         """Constructs the simulator.
 
         Args:
-            robot: Robot.
             world: World.
         """
-        self._robot = robot
+        self._robots = []
+        self._obstacles = []
         self._world = world
-        self._sensor = sensor
         self._app = ConsoleApp()
         self._view = self._app.createView(useGrid=False)
-        self._robot_frame = None
 
         self._initialize()
 
@@ -40,30 +37,68 @@ class Simulator(object):
         om.removeFromObjectModel(om.findObjectByName("world"))
         vis.showPolyData(self._world.to_polydata(), "world")
 
-        # Add robot to view.
-        robot_color = [0.4, 0.85098039, 0.9372549]
-        om.removeFromObjectModel(om.findObjectByName("robot"))
-        self._robot_frame = vis.showPolyData(self._robot.to_polydata(),
-                                             "robot", color=robot_color)
-        vis.addChildFrame(self._robot_frame)
-        self._update_robot()
+    def _add_polydata(self, polydata, frame_name, color):
+        """Adds polydata to the simulation.
 
-    def _update_robot(self):
-        """Updates robot's state."""
+        Args:
+            polydata: Polydata.
+            frame_name: Frame name.
+            color: Color of object.
+
+        Returns:
+            Frame.
+        """
+        om.removeFromObjectModel(om.findObjectByName(frame_name))
+        frame = vis.showPolyData(polydata, frame_name, color=color)
+
+        vis.addChildFrame(frame)
+        return frame
+
+    def add_robot(self, robot):
+        """Adds a robot to the simulation.
+
+        Args:
+            robot: Robot.
+        """
+        color = [0.4, 0.85098039, 0.9372549]
+        frame_name = "robot{}".format(len(self._robots))
+        frame = self._add_polydata(robot.to_polydata(), frame_name, color)
+        self._robots.append((robot, frame))
+        self._update_moving_object(robot, frame)
+
+    def add_obstacle(self, obstacle):
+        """Adds an obstacle to the simulation.
+
+        Args:
+            obstacle: Obstacle.
+        """
+        color = [1.0, 1.0, 1.0]
+        frame_name = "obstacle{}".format(len(self._obstacles))
+        frame = self._add_polydata(obstacle.to_polydata(), frame_name, color)
+        self._obstacles.append((obstacle, frame))
+        self._update_moving_object(obstacle, frame)
+
+    def _update_moving_object(self, moving_object, frame):
+        """Updates moving object's state.
+
+        Args:
+            moving_object: Moving object.
+            frame: Corresponding frame.
+        """
         t = vtk.vtkTransform()
-        t.Translate(self._robot.x, self._robot.y, 0.0)
-        t.RotateZ(np.degrees(self._robot.theta))
-        self._robot_frame.getChildFrame().copyFrame(t)
+        t.Translate(moving_object.x, moving_object.y, 0.0)
+        t.RotateZ(np.degrees(moving_object.theta))
+        frame.getChildFrame().copyFrame(t)
 
-    def _update_sensor(self):
+    def _update_sensor(self, robot, sensor):
         """Updates sensor's rays."""
         d = DebugData()
 
-        origin = np.array([self._robot.x, self._robot.y, 0])
+        origin = np.array([robot.x, robot.y, 0])
 
-        for result, intersection, ray in zip(self._sensor.results,
-                                             self._sensor.intersections,
-                                             self._sensor.rays):
+        for result, intersection, ray in zip(sensor.results,
+                                             sensor.intersections,
+                                             sensor.rays):
             if result:
                 d.addLine(origin, intersection, color=[1, 0, 0], radius=0.05)
             else:
@@ -90,14 +125,21 @@ class Simulator(object):
 
     def tick(self):
         """Update simulation clock."""
-        self._robot.move()
-        self._sensor.update(self._robot.x, self._robot.y, self._robot.theta)
-        self._update_robot()
-        self._update_sensor()
+        for robot, frame in self._robots:
+            robot.move()
+            robot.update_sensor()
+            self._update_moving_object(robot, frame)
+            self._update_sensor(robot, robot.sensor)
+
+        for obstacle, frame in self._obstacles:
+            obstacle.move()
+            self._update_moving_object(obstacle, frame)
+
 
 if __name__ == "__main__":
-    robot = Robot()
-    world = World(120, 100).add_obstacles()
-    sensor = Sensor(world)
-    sim = Simulator(robot, world, sensor)
+    world = World(120, 100)
+    sim = Simulator(world)
+    sim.add_robot(Robot(world))
+    for obstacle in world.generate_obstacles(moving_obstacle_ratio=0.0):
+        sim.add_obstacle(obstacle)
     sim.run()
