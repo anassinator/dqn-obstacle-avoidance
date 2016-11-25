@@ -19,7 +19,7 @@ class Robot(object):
             model: Object model to use.
         """
         self._state = [0., 0., 0.]  # x, y, theta
-        self._velocity = velocity
+        self._velocity = float(velocity)
 
         t = vtk.vtkTransform()
         t.Scale(scale, scale, scale)
@@ -55,6 +55,16 @@ class Robot(object):
     def theta(self, value):
         """Yaw in radians."""
         self._state[2] = float(value)
+
+    @property
+    def velocity(self):
+        """Velocity."""
+        return self._velocity
+
+    @velocity.setter
+    def velocity(self, value):
+        """Velocity."""
+        self._velocity = float(value)
 
     def _dynamics(self, state, t, controller=None):
         """Dynamics of the robot.
