@@ -22,8 +22,6 @@ class Robot(object):
         self._velocity = velocity
 
         t = vtk.vtkTransform()
-        t.RotateX(90)
-        t.RotateY(-90)
         t.Scale(scale, scale, scale)
         polydata = ioUtils.readPolyData(model)
         self._polydata = filterUtils.transformPolyData(polydata, t)
