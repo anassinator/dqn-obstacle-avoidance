@@ -195,11 +195,11 @@ class Obstacle(MovingObject):
         """
         data = DebugData()
         self._bounds = bounds
-        self.radius = radius
-        self.height = height
-        self.center = [0, 0, height / 2 - 0.5]
-        self.axis = [0, 0, 1]  # Upright cylinder.
-        data.addCylinder(self.center, self.axis, height, radius)
+        self._radius = radius
+        self._height = height
+        center = [0, 0, height / 2 - 0.5]
+        axis = [0, 0, 1]  # Upright cylinder.
+        data.addCylinder(center, axis, height, radius)
         polydata = data.getPolyData()
         super(Obstacle, self).__init__(velocity, polydata)
 
@@ -215,12 +215,12 @@ class Obstacle(MovingObject):
         """
         x_min, x_max, y_min, y_max = self._bounds
         x, y, theta = state
-        if x - self.radius <= x_min:
+        if x - self._radius <= x_min:
             return np.pi
-        elif x + self.radius >= x_max:
+        elif x + self._radius >= x_max:
             return np.pi
-        elif y - self.radius <= y_min:
+        elif y - self._radius <= y_min:
             return np.pi
-        elif y + self.radius >= y_max:
+        elif y + self._radius >= y_max:
             return np.pi
         return 0.

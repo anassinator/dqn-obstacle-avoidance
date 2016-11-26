@@ -65,6 +65,7 @@ class Simulator(object):
         frame_name = "robot{}".format(len(self._robots))
         frame = self._add_polydata(robot.to_polydata(), frame_name, color)
         self._robots.append((robot, frame))
+        self._update_moving_object(obstacle, frame)
 
     def add_obstacle(self, obstacle):
         """Adds an obstacle to the simulation.
@@ -76,6 +77,7 @@ class Simulator(object):
         frame_name = "obstacle{}".format(len(self._obstacles))
         frame = self._add_polydata(obstacle.to_polydata(), frame_name, color)
         self._obstacles.append((obstacle, frame))
+        self._update_moving_object(obstacle, frame)
 
     def _update_moving_object(self, moving_object, frame):
         """Updates moving object's state.
@@ -151,7 +153,7 @@ class Simulator(object):
 if __name__ == "__main__":
     world = World(120, 100)
     sim = Simulator(world)
-    for obstacle in world.generate_obstacles(moving_obstacle_ratio=1.0):
+    for obstacle in world.generate_obstacles(moving_obstacle_ratio=0.2):
         sim.add_obstacle(obstacle)
     sim.update_locator()
 
