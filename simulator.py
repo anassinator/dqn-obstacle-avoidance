@@ -131,17 +131,21 @@ class Simulator(object):
 
     def tick(self):
         """Update simulation clock."""
+        need_update = False
         for obstacle, frame in self._obstacles:
             if obstacle.velocity != 0.:
                 obstacle.move()
                 self._update_moving_object(obstacle, frame)
+                need_update = True
 
-        self.update_locator()
+        if need_update:
+            self.update_locator()
 
         for robot, frame in self._robots:
             self._update_moving_object(robot, frame)
-            for sensor in robot.sensors:
-                sensor.set_locator(self.locator)
+            if need_update:
+                for sensor in robot.sensors:
+                    sensor.set_locator(self.locator)
             robot.move()
             for sensor in robot.sensors:
                 self._update_sensor(sensor)
