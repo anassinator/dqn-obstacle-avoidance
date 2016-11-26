@@ -3,14 +3,15 @@
 import numpy as np
 from world import World
 from PythonQt import QtGui
+from sensor import RaySensor
 from director import applogic
 from moving_object import Robot
 from director import vtkAll as vtk
 from director import objectmodel as om
+from director.debugVis import DebugData
 from director import visualization as vis
 from director.consoleapp import ConsoleApp
 from director.timercallback import TimerCallback
-from director.debugVis import DebugData
 
 
 class Simulator(object):
@@ -60,8 +61,6 @@ class Simulator(object):
         Args:
             robot: Robot.
         """
-        robot.sensor.set_locator(self.locator)
-
         color = [0.4, 0.85098039, 0.9372549]
         frame_name = "robot{}".format(len(self._robots))
         frame = self._add_polydata(robot.to_polydata(), frame_name, color)
@@ -92,27 +91,19 @@ class Simulator(object):
         t.RotateZ(np.degrees(moving_object.theta))
         frame.getChildFrame().copyFrame(t)
 
-    def _update_sensor(self, robot, sensor):
-        """Updates sensor's rays."""
-        d = DebugData()
+    def _update_sensor(self, sensor):
+        """Updates sensor's rays.
 
-        origin = np.array([robot.x, robot.y, 0])
-
-        for result, intersection, ray in zip(sensor.results,
-                                             sensor.intersections,
-                                             sensor.rays):
-            if result:
-                d.addLine(origin, intersection, color=[1, 0, 0], radius=0.05)
-            else:
-                d.addLine(origin, origin + ray, color=[0, 0, 1], radius=0.05)
-
-        vis.updatePolyData(d.getPolyData(), 'rays', colorByName='RGB255')
+        Args:
+            sensor: Sensor.
+        """
+        vis.updatePolyData(sensor.to_polydata(), "rays", colorByName="RGB255")
 
     def update_locator(self):
+        """Updates cell locator."""
         d = DebugData()
 
         d.addPolyData(self._world.to_polydata())
-
         for obstacle, frame in self._obstacles:
             d.addCylinder([obstacle.x, obstacle.y, obstacle.height / 2],
                           obstacle.axis, obstacle.height, obstacle.radius)
@@ -144,14 +135,13 @@ class Simulator(object):
             obstacle.move()
             self._update_moving_object(obstacle, frame)
 
-        # self._update_locator()
-
         for robot, frame in self._robots:
-            robot.move()
-            # robot.sensor.set_locator(self.locator)
-            robot.update_sensor()
             self._update_moving_object(robot, frame)
-            self._update_sensor(robot, robot.sensor)
+            for sensor in robot.sensors:
+                sensor.set_locator(self.locator)
+            robot.move()
+            for sensor in robot.sensors:
+                self._update_sensor(sensor)
 
 
 if __name__ == "__main__":
@@ -160,5 +150,8 @@ if __name__ == "__main__":
     for obstacle in world.generate_obstacles(moving_obstacle_ratio=0.0):
         sim.add_obstacle(obstacle)
     sim.update_locator()
-    sim.add_robot(Robot(world))
+
+    robot = Robot()
+    robot.attach_sensor(RaySensor())
+    sim.add_robot(robot)
     sim.run()

@@ -2,10 +2,10 @@
 
 import numpy as np
 from scipy import integrate
+from sensor import RaySensor
 from director import vtkAll as vtk
 from director.debugVis import DebugData
 from director import ioUtils, filterUtils
-from sensor import Sensor
 
 
 class MovingObject(object):
@@ -22,6 +22,7 @@ class MovingObject(object):
         self._state = [0., 0., 0.]
         self._velocity = float(velocity)
         self._polydata = polydata
+        self._sensors = []
 
     @property
     def x(self):
@@ -62,6 +63,19 @@ class MovingObject(object):
     def velocity(self, value):
         """Velocity."""
         self._velocity = float(value)
+
+    @property
+    def sensors(self):
+        """List of attached sensors."""
+        return self._sensors
+
+    def attach_sensor(self, sensor):
+        """Attaches a sensor.
+
+        Args:
+            sensor: Sensor.
+        """
+        self._sensors.append(sensor)
 
     def _dynamics(self, state, t, controller=None):
         """Dynamics of the object.
@@ -111,6 +125,7 @@ class MovingObject(object):
         """
         states = self._simulate(dt, controller)
         self._state = states[-1, :]
+        list(map(lambda s: s.update(*self._state), self._sensors))
 
     def to_polydata(self):
         """Converts object to visualizable poly data."""
@@ -121,7 +136,7 @@ class Robot(MovingObject):
 
     """Robot."""
 
-    def __init__(self, world, velocity=12.0, scale=0.20, model="A10.obj"):
+    def __init__(self, velocity=15.0, scale=0.10, model="A10.obj"):
         """Constructs a Robot.
 
         Args:
@@ -134,11 +149,6 @@ class Robot(MovingObject):
         polydata = ioUtils.readPolyData(model)
         polydata = filterUtils.transformPolyData(polydata, t)
         super(Robot, self).__init__(velocity, polydata)
-
-        self.sensor = Sensor(world)
-
-    def update_sensor(self):
-        self.sensor.update(*self._state)
 
 
 class Obstacle(MovingObject):
