@@ -10,7 +10,7 @@ class RaySensor(object):
 
     """Ray sensor."""
 
-    def __init__(self, num_rays=36, radius=10, min_angle=0, max_angle=360):
+    def __init__(self, num_rays=24, radius=10, min_angle=0, max_angle=360):
         """Constructs a RaySensor.
 
         Args:
@@ -108,8 +108,12 @@ class RaySensor(object):
                                              self._intersections,
                                              self._rays):
             if result:
-                d.addLine(origin, intersection, color=[1, 0, 0], radius=0.05)
+                color = [1., 0.45882353, 0.51372549]
+                endpoint = intersection
             else:
-                d.addLine(origin, origin + ray, color=[0, 0, 1], radius=0.05)
+                color = [0., 0.6, 0.58823529]
+                endpoint = origin + ray
+
+            d.addLine(origin, endpoint, color=color, radius=0.05)
 
         return d.getPolyData()

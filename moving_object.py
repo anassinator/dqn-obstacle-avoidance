@@ -136,7 +136,7 @@ class Robot(MovingObject):
 
     """Robot."""
 
-    def __init__(self, velocity=15.0, scale=0.10, model="A10.obj"):
+    def __init__(self, velocity=15.0, scale=0.15, model="A10.obj"):
         """Constructs a Robot.
 
         Args:
