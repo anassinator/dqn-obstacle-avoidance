@@ -91,13 +91,15 @@ class Simulator(object):
         t.RotateZ(np.degrees(moving_object.theta))
         frame.getChildFrame().copyFrame(t)
 
-    def _update_sensor(self, sensor):
+    def _update_sensor(self, sensor, frame_name):
         """Updates sensor's rays.
 
         Args:
             sensor: Sensor.
+            frame_name: Frame name.
         """
-        vis.updatePolyData(sensor.to_polydata(), "rays", colorByName="RGB255")
+        vis.updatePolyData(sensor.to_polydata(), frame_name,
+                           colorByName="RGB255")
 
     def update_locator(self):
         """Updates cell locator."""
@@ -140,14 +142,15 @@ class Simulator(object):
         if need_update:
             self.update_locator()
 
-        for robot, frame in self._robots:
+        for i, (robot, frame) in enumerate(self._robots):
             self._update_moving_object(robot, frame)
             if need_update:
                 for sensor in robot.sensors:
                     sensor.set_locator(self.locator)
             robot.move()
             for sensor in robot.sensors:
-                self._update_sensor(sensor)
+                frame_name = "rays{}".format(i)
+                self._update_sensor(sensor, frame_name)
 
 
 if __name__ == "__main__":
