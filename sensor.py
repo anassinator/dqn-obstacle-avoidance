@@ -38,6 +38,18 @@ class RaySensor(object):
         """Array of distances measured by each ray."""
         return self._distances
 
+    def has_collided(self, max_distance=0.15):
+        """Returns whether a collision has occured or not.
+
+        Args:
+            max_distance: Threshold for collision distance.
+        """
+        for hit, distance in zip(self._hit, self._distances):
+            if hit and distance <= max_distance:
+                return True
+
+        return False
+
     def set_locator(self, locator):
         """Sets the vtk cell locator.
 
