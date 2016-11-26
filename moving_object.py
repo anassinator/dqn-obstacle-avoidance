@@ -2,7 +2,6 @@
 
 import numpy as np
 from scipy import integrate
-from sensor import RaySensor
 from director import vtkAll as vtk
 from director.debugVis import DebugData
 from director import ioUtils, filterUtils
@@ -19,8 +18,9 @@ class MovingObject(object):
             velocity: Velocity.
             polydata: Polydata.
         """
-        self._state = [0., 0., 0.]
+        self._state = np.array([0., 0., 0.])
         self._velocity = float(velocity)
+        self._raw_polydata = polydata
         self._polydata = polydata
         self._sensors = []
 
@@ -32,7 +32,9 @@ class MovingObject(object):
     @x.setter
     def x(self, value):
         """X coordinate."""
-        self._state[0] = float(value)
+        next_state = self._state.copy()
+        next_state[0] = float(value)
+        self._update_state(next_state)
 
     @property
     def y(self):
@@ -42,7 +44,9 @@ class MovingObject(object):
     @y.setter
     def y(self, value):
         """Y coordinate."""
-        self._state[1] = float(value)
+        next_state = self._state.copy()
+        next_state[1] = float(value)
+        self._update_state(next_state)
 
     @property
     def theta(self):
@@ -52,7 +56,9 @@ class MovingObject(object):
     @theta.setter
     def theta(self, value):
         """Yaw in radians."""
-        self._state[2] = float(value)
+        next_state = self._state.copy()
+        next_state[2] = float(value)
+        self._update_state(next_state)
 
     @property
     def velocity(self):
@@ -127,12 +133,34 @@ class MovingObject(object):
             dt: Length of time step.
         """
         states = self._simulate(dt)
-        self._state = states[-1, :]
+        self._update_state(states[-1, :])
         list(map(lambda s: s.update(*self._state), self._sensors))
 
-    def to_polydata(self):
-        """Converts object to visualizable poly data."""
+    def _update_state(self, next_state):
+        """Updates the moving object's state.
+
+        Args:
+            next_state: New state.
+        """
+        t = vtk.vtkTransform()
+        t.Translate([next_state[0], next_state[1], 0.])
+        t.RotateZ(np.degrees(next_state[2]))
+        self._polydata = filterUtils.transformPolyData(self._raw_polydata, t)
+        self._state = next_state
+
+    def to_positioned_polydata(self):
+        """Converts object to visualizable poly data.
+
+        Note: Transformations have been already applied to this.
+        """
         return self._polydata
+
+    def to_polydata(self):
+        """Converts object to visualizable poly data.
+
+        Note: This is centered at (0, 0, 0) and is not rotated.
+        """
+        return self._raw_polydata
 
 
 class Robot(MovingObject):
