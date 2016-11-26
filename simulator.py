@@ -135,6 +135,8 @@ class Simulator(object):
             obstacle.move()
             self._update_moving_object(obstacle, frame)
 
+        self.update_locator()
+
         for robot, frame in self._robots:
             self._update_moving_object(robot, frame)
             for sensor in robot.sensors:
@@ -147,7 +149,7 @@ class Simulator(object):
 if __name__ == "__main__":
     world = World(120, 100)
     sim = Simulator(world)
-    for obstacle in world.generate_obstacles(moving_obstacle_ratio=0.0):
+    for obstacle in world.generate_obstacles(moving_obstacle_ratio=0.2):
         sim.add_obstacle(obstacle)
     sim.update_locator()
 
