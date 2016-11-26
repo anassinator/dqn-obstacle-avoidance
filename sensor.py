@@ -27,11 +27,16 @@ class RaySensor(object):
         self._locator = None
         self._state = [0., 0., 0.]  # x, y, theta
 
-        self._results = np.zeros(num_rays)
+        self._hit = np.zeros(num_rays)
         self._distances = np.zeros(num_rays)
         self._intersections = [[0, 0, 0] for i in range(num_rays)]
 
         self._update_rays(self._state[2])
+
+    @property
+    def distances(self):
+        """Array of distances measured by each ray."""
+        return self._distances
 
     def set_locator(self, locator):
         """Sets the vtk cell locator.
@@ -57,8 +62,8 @@ class RaySensor(object):
             return
 
         for i in range(self._num_rays):
-            res, dist, inter = self._cast_ray(origin, origin + self._rays[i])
-            self._results[i] = res
+            hit, dist, inter = self._cast_ray(origin, origin + self._rays[i])
+            self._hit[i] = hit
             self._distances[i] = dist
             self._intersections[i] = inter
 
@@ -87,7 +92,7 @@ class RaySensor(object):
             end: End point of the ray.
 
         Returns:
-            Tuple of (result, distance, intersection).
+            Tuple of (whether it intersected, distance, intersection).
         """
         tolerance = 0.0                 # intersection tolerance
         pt = [0.0, 0.0, 0.0]            # coordinate of intersection
@@ -95,19 +100,19 @@ class RaySensor(object):
         pcoords = [0.0, 0.0, 0.0]       # location within intersected cell
         subID = vtk.mutable(0)          # subID of intersected cell
 
-        result = self._locator.IntersectWithLine(start, end, tolerance,
-                                                 distance, pt, pcoords, subID)
+        hit = self._locator.IntersectWithLine(start, end, tolerance,
+                                              distance, pt, pcoords, subID)
 
-        return result, distance, pt
+        return hit, distance, pt
 
     def to_polydata(self):
         """Converts the sensor to polydata."""
         d = DebugData()
         origin = np.array([self._state[0], self._state[1], 0])
-        for result, intersection, ray in zip(self._results,
-                                             self._intersections,
-                                             self._rays):
-            if result:
+        for hit, intersection, ray in zip(self._hit,
+                                          self._intersections,
+                                          self._rays):
+            if hit:
                 color = [1., 0.45882353, 0.51372549]
                 endpoint = intersection
             else:
