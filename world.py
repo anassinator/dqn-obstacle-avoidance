@@ -59,12 +59,14 @@ class World(object):
         field_area = self._width * self._height
         obstacle_area = int(field_area * density)
 
+        bounds = self._x_min, self._x_max, self._y_min, self._y_max
         while obstacle_area > 0:
             radius = np.random.uniform(0.4, 2.0)
             center_x_range = (self._x_min + radius, self._x_max - radius)
             center_y_range = (self._y_min + radius, self._y_max - radius)
             center_x = np.random.uniform(*center_x_range)
             center_y = np.random.uniform(*center_y_range)
+            theta = np.random.uniform(0., 360.)
             obstacle_area -= np.pi * radius ** 2
 
             # Only some obstacles should be moving.
@@ -73,9 +75,10 @@ class World(object):
             else:
                 velocity = np.random.uniform(-30.0, 30.0)
 
-            obstacle = Obstacle(velocity, radius)
+            obstacle = Obstacle(velocity, radius, bounds)
             obstacle.x = center_x
             obstacle.y = center_y
+            obstacle.theta = np.radians(theta)
             yield obstacle
 
     def to_polydata(self):

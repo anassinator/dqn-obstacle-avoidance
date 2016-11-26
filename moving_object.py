@@ -83,29 +83,33 @@ class MovingObject(object):
         Args:
             state: Initial condition.
             t: Time.
-            controller: Callable that takes state and t as inputs and returns
-                yaw.
 
         Returns:
             Derivative of state at t.
         """
-        if controller:
-            yaw = controller(state, t)
-        else:
-            yaw = self._velocity * np.sin(t)
-
         dqdt = np.zeros_like(state)
         dqdt[0] = self._velocity * np.cos(state[2])
         dqdt[1] = self._velocity * np.sin(state[2])
-        dqdt[2] = yaw
+        dqdt[2] = self._control(state, t)
         return dqdt
 
-    def _simulate(self, dt, controller, start_time=0.0, steps=1):
+    def _control(self, state, t):
+        """Returns the yaw given state.
+
+        Args:
+            state: State.
+            t: Time.
+
+        Returns:
+            Yaw.
+        """
+        return self._velocity * np.sin(2 * np.pi * t)
+
+    def _simulate(self, dt, start_time=0.0, steps=1):
         """Simulates the object moving.
 
         Args:
             dt: Time between steps.
-            controller: Yaw controller to use.
             start_time: Start time to use, default: 0.
             steps: Number of steps, default: 1.
 
@@ -116,14 +120,13 @@ class MovingObject(object):
         states = integrate.odeint(self._dynamics, self._state, t)
         return states
 
-    def move(self, dt=1.0/30.0, controller=None):
+    def move(self, dt=1.0/30.0):
         """Moves the object by a given time step.
 
         Args:
             dt: Length of time step.
-            controller: Yaw controller to use.
         """
-        states = self._simulate(dt, controller)
+        states = self._simulate(dt)
         self._state = states[-1, :]
         list(map(lambda s: s.update(*self._state), self._sensors))
 
@@ -136,7 +139,7 @@ class Robot(MovingObject):
 
     """Robot."""
 
-    def __init__(self, velocity=15.0, scale=0.15, model="A10.obj"):
+    def __init__(self, velocity=25.0, scale=0.15, model="A10.obj"):
         """Constructs a Robot.
 
         Args:
@@ -155,7 +158,7 @@ class Obstacle(MovingObject):
 
     """Obstacle."""
 
-    def __init__(self, velocity, radius, height=1.0):
+    def __init__(self, velocity, radius, bounds, height=1.0):
         """Constructs a Robot.
 
         Args:
@@ -163,6 +166,7 @@ class Obstacle(MovingObject):
             radius: Radius of the obstacle.
         """
         data = DebugData()
+        self._bounds = bounds
         self.radius = radius
         self.height = height
         self.center = [0, 0, height / 2 - 0.5]
@@ -170,3 +174,25 @@ class Obstacle(MovingObject):
         data.addCylinder(self.center, self.axis, height, radius)
         polydata = data.getPolyData()
         super(Obstacle, self).__init__(velocity, polydata)
+
+    def _control(self, state, t):
+        """Returns the yaw given state.
+
+        Args:
+            state: State.
+            t: Time.
+
+        Returns:
+            Yaw.
+        """
+        x_min, x_max, y_min, y_max = self._bounds
+        x, y, theta = state
+        if x - self.radius <= x_min:
+            return np.pi
+        elif x + self.radius >= x_max:
+            return np.pi
+        elif y - self.radius <= y_min:
+            return np.pi
+        elif y + self.radius >= y_max:
+            return np.pi
+        return 0.
