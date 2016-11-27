@@ -144,9 +144,8 @@ class Simulator(object):
 
         for i, (robot, frame) in enumerate(self._robots):
             self._update_moving_object(robot, frame)
-            if need_update:
-                for sensor in robot.sensors:
-                    sensor.set_locator(self.locator)
+            for sensor in robot.sensors:
+                sensor.set_locator(self.locator)
             robot.move()
             for sensor in robot.sensors:
                 frame_name = "rays{}".format(i)
