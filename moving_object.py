@@ -191,8 +191,8 @@ class Robot(MovingObject):
         """
         super(Robot, self).move(dt)
         collided = self._sensors[0].has_collided()
-        state = self._get_rotated_distances(self._rotation)
-        self._nn.train(state, [-100 if collided else -max(self._sensors[0].distances)])
+        state = self._sensors[0].distances
+        self._nn.train(state, [0 if collided else state[4]])
 
     def _get_rotated_distances(self, rot):
         distances = self._sensors[0].distances
@@ -210,18 +210,16 @@ class Robot(MovingObject):
             Yaw.
         """
         actions = [-np.pi / 2, -np.pi / 4, 0., np.pi / 4, np.pi / 2]
-        rotations = [-6, -3, 0, 3, 6]
+        rotations = [-2, -1, 0, 1, 2]
 
         utilities = [
-            (i, self._nn.evaluate(self._get_rotated_distances(rotations[i])))
+            (a, self._nn.evaluate(self._get_rotated_distances(rotations[i])))
             for i, a in enumerate(actions)
         ]
-        i, optimal_utility = max(utilities, key=lambda x: x[1])
-        self._rotation = rotations[i]
-        optimal_a = actions[i]
+        optimal_a, optimal_utility = max(utilities, key=lambda x: x[1])
         # if np.random.random_sample() > 0.8:
             # self._action_taken = actions[0]
-        print(optimal_a, optimal_utility)
+        print(optimal_a, optimal_utility, self._get_rotated_distances(0).tolist())
         return optimal_a
 
 

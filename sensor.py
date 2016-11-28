@@ -10,7 +10,7 @@ class RaySensor(object):
 
     """Ray sensor."""
 
-    def __init__(self, num_rays=24, radius=10, min_angle=0, max_angle=360):
+    def __init__(self, num_rays=9, radius=10, min_angle=-90, max_angle=90):
         """Constructs a RaySensor.
 
         Args:
