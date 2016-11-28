@@ -36,7 +36,11 @@ class RaySensor(object):
     @property
     def distances(self):
         """Array of distances measured by each ray."""
-        return self._distances
+        normalized_distances = [
+            self._distances[i] / self._radius if self._hit[i] else 1.0
+            for i in range(self._num_rays)
+        ]
+        return normalized_distances
 
     def has_collided(self, max_distance=0.15):
         """Returns whether a collision has occured or not.
