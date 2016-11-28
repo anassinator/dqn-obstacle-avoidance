@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import numpy as np
+from net import Controller
 from scipy import integrate
 from director import vtkAll as vtk
 from director.debugVis import DebugData
@@ -180,6 +181,48 @@ class Robot(MovingObject):
         polydata = ioUtils.readPolyData(model)
         polydata = filterUtils.transformPolyData(polydata, t)
         super(Robot, self).__init__(velocity, polydata)
+        self._nn = Controller()
+
+    def move(self, dt=1.0/30.0):
+        """Moves the object by a given time step.
+
+        Args:
+            dt: Length of time step.
+        """
+        super(Robot, self).move(dt)
+        collided = self._sensors[0].has_collided()
+        state = self._get_rotated_distances(self._rotation)
+        self._nn.train(state, [-100 if collided else -max(self._sensors[0].distances)])
+
+    def _get_rotated_distances(self, rot):
+        distances = self._sensors[0].distances
+        rotated_distances = np.hstack([distances[-rot:], distances[:-rot]])
+        return rotated_distances
+
+    def _control(self, state, t):
+        """Returns the yaw given state.
+
+        Args:
+            state: State.
+            t: Time.
+
+        Returns:
+            Yaw.
+        """
+        actions = [-np.pi / 2, -np.pi / 4, 0., np.pi / 4, np.pi / 2]
+        rotations = [-6, -3, 0, 3, 6]
+
+        utilities = [
+            (i, self._nn.evaluate(self._get_rotated_distances(rotations[i])))
+            for i, a in enumerate(actions)
+        ]
+        i, optimal_utility = max(utilities, key=lambda x: x[1])
+        self._rotation = rotations[i]
+        optimal_a = actions[i]
+        # if np.random.random_sample() > 0.8:
+            # self._action_taken = actions[0]
+        print(optimal_a, optimal_utility)
+        return optimal_a
 
 
 class Obstacle(MovingObject):
