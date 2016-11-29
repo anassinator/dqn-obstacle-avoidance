@@ -55,6 +55,13 @@ class Simulator(object):
         vis.addChildFrame(frame)
         return frame
 
+    def add_target(self, target):
+        data = DebugData()
+        center = [target[0], target[1], 1]
+        axis = [0, 0, 1]  # Upright cylinder.
+        data.addCylinder(center, axis, 2, 3)
+        self._add_polydata(data.getPolyData(), "target", [0, 0.8, 0])
+
     def add_robot(self, robot):
         """Adds a robot to the simulation.
 
@@ -159,7 +166,10 @@ if __name__ == "__main__":
         sim.add_obstacle(obstacle)
     sim.update_locator()
 
-    robot = Robot(target=(60, 70))
+    target = (60, 70)
+
+    sim.add_target(target)
+    robot = Robot(target=target)
     robot.attach_sensor(RaySensor())
     sim.add_robot(robot)
     sim.run()
