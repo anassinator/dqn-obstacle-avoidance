@@ -124,6 +124,7 @@ class MovingObject(object):
             State for each step taken.
         """
         t = np.arange(start_time, start_time + (steps + 1) * dt, dt)
+        print(t)
         states = integrate.odeint(self._dynamics, self._state, t)
         return states
 
@@ -190,14 +191,26 @@ class Robot(MovingObject):
         Args:
             dt: Length of time step.
         """
+        gamma = 0.9
+        prev_state = self._get_state()
+        prev_utilites = self._nn.evaluate(prev_state)
         super(Robot, self).move(dt)
-        collided = self._sensors[0].has_collided()
-        state = self._get_state()
+        next_state = self._get_state()
+        next_utilities = self._nn.evaluate(next_state)
+        max_i = np.argmax(next_utilities)
+        print(next_utilities, max_i, next_utilities[max_i])
+        rewards = [self._get_reward() + gamma * next_utilities[i]
+                   if i == max_i else prev_utilites[i]
+                   for i in range(len(next_utilities))]
+        self._nn.train(prev_state, rewards)
+
+    def _get_reward(self):
         dx, dy = self._target[0] - self.x, self._target[1] - self.y
         distance = (dx / 1000) ** 2 + (dy / 1000) ** 2
-        reward = [-10 if collided else -distance - abs(self._angle_to_destination())]
-        print(np.degrees(self._angle_to_destination()))
-        self._nn.train(state, reward)
+        if self._sensors[0].has_collided():
+            return [-10]
+        else:
+            return [-distance - abs(self._angle_to_destination())]
 
     def _angle_to_destination(self):
         x, y = self._target[0] - self.x, self._target[1] - self.y
@@ -206,17 +219,10 @@ class Robot(MovingObject):
     def _wrap_angles(self, a):
         return (a + np.pi) % (2 * np.pi) - np.pi
 
-    def _get_rotated_distances(self, rot):
-        distances = self._sensors[0].distances
-        rotated_distances = np.hstack([distances[-rot:], distances[:-rot]])
-        return rotated_distances
-
-    def _get_state(self, action=0, rotation=0):
+    def _get_state(self):
         dx, dy = self._target[0] - self.x, self._target[1] - self.y
-        dtheta = self._wrap_angles(action - self._angle_to_destination())
-        curr_state = [dx / 1000, dy / 1000, dtheta]
-        distances = self._get_rotated_distances(rotation)
-        return np.hstack([curr_state, distances])
+        curr_state = [dx / 1000, dy / 1000, self._angle_to_destination()]
+        return np.hstack([curr_state, self._sensors[0].distances])
 
     def _control(self, state, t):
         """Returns the yaw given state.
@@ -228,21 +234,13 @@ class Robot(MovingObject):
         Returns:
             Yaw.
         """
-        actions = [-np.pi / 2, -np.pi / 4, -np.pi / 8, 0., np.pi / 8, np.pi / 4, np.pi / 2]
-        rotations = [4, 2, 1, 0, -1, -2, -4]
-        states = [
-            self._get_state(actions[i], rotations[i])
-            for i in range(len(actions))
-        ]
+        actions = [-np.pi / 2, -np.pi / 4, -np.pi / 8, 0.,
+                   np.pi / 8, np.pi / 4, np.pi / 2]
 
-        utilities = [
-            (a, self._nn.evaluate(states[i]))
-            for i, a in enumerate(actions)
-        ]
-        optimal_a, optimal_utility = max(utilities, key=lambda x: x[1][0])
-        # if np.random.random_sample() > 0.8:
-            # self._action_taken = actions[0]
-        print(optimal_a, optimal_utility[0])
+        utilities = self._nn.evaluate(self._get_state())
+        optimal_i = np.argmax(utilities)
+        optimal_a, optimal_utility = actions[optimal_i], utilities[optimal_i]
+        print(optimal_a, optimal_utility)
         return optimal_a
 
 

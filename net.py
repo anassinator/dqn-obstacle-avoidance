@@ -26,7 +26,7 @@ class NeuralNetwork(object):
         # Set up trainer.
         self._y_truth = tf.placeholder(dtype, [None, output_size])
         loss = tf.reduce_mean(tf.square(self._y_truth - self._y)) / 2
-        optimizer = tf.train.GradientDescentOptimizer(0.000001)
+        optimizer = tf.train.GradientDescentOptimizer(0.1)
         self._trainer = optimizer.minimize(loss)
 
         # Set up session.
@@ -82,7 +82,7 @@ class NeuralNetwork(object):
 class Controller(object):
 
     def __init__(self):
-        self._nn = NeuralNetwork(19, 1, [12, 5])
+        self._nn = NeuralNetwork(19, 7, [13])
 
     def evaluate(self, x):
         return self._nn.evaluate(x)
