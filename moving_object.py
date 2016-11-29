@@ -176,7 +176,7 @@ class Robot(MovingObject):
             scale: Scale of the model.
             model: Object model to use.
         """
-        self.target = target
+        self._target = target
         t = vtk.vtkTransform()
         t.Scale(scale, scale, scale)
         polydata = ioUtils.readPolyData(model)
@@ -192,14 +192,22 @@ class Robot(MovingObject):
         """
         super(Robot, self).move(dt)
         collided = self._sensors[0].has_collided()
-        state = self._sensors[0].distances
-        reward = [-1 if collided else max(0, state[0])]
+        state = self._get_state()
+        reward = [-10 if collided else -abs(self._angle_to_destination())]
         self._nn.train(state, reward)
+
+    def _angle_to_destination(self):
+        x, y = self._target[0] - self.x, self._target[1] - self.y
+        return np.arctan2(y, x) - self.theta
 
     def _get_rotated_distances(self, rot):
         distances = self._sensors[0].distances
         rotated_distances = np.hstack([distances[-rot:], distances[:-rot]])
         return rotated_distances
+
+    def _get_state(self, action=0, rotation=0):
+        return np.hstack([[abs(action - self._angle_to_destination())],
+                           self._get_rotated_distances(rotation)])
 
     def _control(self, state, t):
         """Returns the yaw given state.
@@ -212,10 +220,14 @@ class Robot(MovingObject):
             Yaw.
         """
         actions = [-np.pi / 4, -np.pi / 8, 0., np.pi / 8, np.pi / 4]
-        rotations = [-2, -1, 0, 1, 2]
+        rotations = [2, 1, 0, -1, -2]
+        states = [
+            self._get_state(actions[i], rotations[i])
+            for i in range(len(actions))
+        ]
 
         utilities = [
-            (a, self._nn.evaluate(self._get_rotated_distances(rotations[i])))
+            (a, self._nn.evaluate(states[i]))
             for i, a in enumerate(actions)
         ]
         optimal_a, optimal_utility = max(utilities, key=lambda x: x[1][0])
