@@ -42,7 +42,7 @@ class RaySensor(object):
         ]
         return normalized_distances
 
-    def has_collided(self, max_distance=0.15):
+    def has_collided(self, max_distance=0.05):
         """Returns whether a collision has occured or not.
 
         Args:
