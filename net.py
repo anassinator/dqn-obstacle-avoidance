@@ -33,6 +33,8 @@ class NeuralNetwork(object):
         self._session = tf.Session()
         self._session.run(tf.initialize_all_variables())
 
+        self._saver = tf.train.Saver()
+
     def _add_layer(self, prev_layer, input_size, output_size, activation):
         # Build layer.
         W = tf.Variable(tf.random_normal([input_size, output_size]))
@@ -66,6 +68,15 @@ class NeuralNetwork(object):
     def train_many(self, xs, ys):
         self._session.run(self._trainer,
                           feed_dict={self._x: xs, self._y_truth: ys})
+
+    def save(self, save_path="model.ckpt"):
+        save_path = self._saver.save(self._session, save_path)
+        print("Model saved in file: %s" % save_path)
+
+    def load(self, save_path="model.ckpt"):
+        self._session = tf.Session()
+        self._saver.restore(self._session, save_path)
+        print("Model restored.")
 
 
 class Controller(object):
