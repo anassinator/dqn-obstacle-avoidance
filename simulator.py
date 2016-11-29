@@ -166,7 +166,7 @@ if __name__ == "__main__":
         sim.add_obstacle(obstacle)
     sim.update_locator()
 
-    target = (600, 170)
+    target = (600, -370)
 
     sim.add_target(target)
     robot = Robot(target=target)
