@@ -58,7 +58,7 @@ class MovingObject(object):
     def theta(self, value):
         """Yaw in radians."""
         next_state = self._state.copy()
-        next_state[2] = float(value)
+        next_state[2] = float(value) % (2 * np.pi)
         self._update_state(next_state)
 
     @property
@@ -194,11 +194,15 @@ class Robot(MovingObject):
         collided = self._sensors[0].has_collided()
         state = self._get_state()
         reward = [-10 if collided else -abs(self._angle_to_destination())]
+        print(np.degrees(self._angle_to_destination()))
         self._nn.train(state, reward)
 
     def _angle_to_destination(self):
         x, y = self._target[0] - self.x, self._target[1] - self.y
-        return np.arctan2(y, x) - self.theta
+        return self._wrap_angles(np.arctan2(y, x) - self.theta)
+
+    def _wrap_angles(self, a):
+        return (a + np.pi) % (2 * np.pi) - np.pi
 
     def _get_rotated_distances(self, rot):
         distances = self._sensors[0].distances
@@ -206,7 +210,7 @@ class Robot(MovingObject):
         return rotated_distances
 
     def _get_state(self, action=0, rotation=0):
-        return np.hstack([[abs(action - self._angle_to_destination())],
+        return np.hstack([[abs(self._wrap_angles(action - self._angle_to_destination()))],
                            self._get_rotated_distances(rotation)])
 
     def _control(self, state, t):
@@ -219,8 +223,8 @@ class Robot(MovingObject):
         Returns:
             Yaw.
         """
-        actions = [-np.pi / 4, -np.pi / 8, 0., np.pi / 8, np.pi / 4]
-        rotations = [2, 1, 0, -1, -2]
+        actions = [-np.pi / 2, -np.pi / 4, -np.pi / 8, 0., np.pi / 8, np.pi / 4, np.pi / 2]
+        rotations = [4, 2, 1, 0, -1, -2, -4]
         states = [
             self._get_state(actions[i], rotations[i])
             for i in range(len(actions))

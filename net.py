@@ -26,7 +26,7 @@ class NeuralNetwork(object):
         # Set up trainer.
         self._y_truth = tf.placeholder(dtype, [None, output_size])
         loss = tf.reduce_mean(tf.square(self._y_truth - self._y)) / 2
-        optimizer = tf.train.GradientDescentOptimizer(0.001)
+        optimizer = tf.train.GradientDescentOptimizer(0.00001)
         self._trainer = optimizer.minimize(loss)
 
         # Set up session.
@@ -36,7 +36,7 @@ class NeuralNetwork(object):
     def _add_layer(self, prev_layer, input_size, output_size, activation):
         # Build layer.
         W = tf.Variable(tf.random_normal([input_size, output_size]))
-        b = tf.Variable(tf.random_normal([output_size]))
+        b = tf.Variable(tf.zeros([output_size]))
         out = activation(tf.matmul(prev_layer, W) + b)
 
         # Maintain references.
