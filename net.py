@@ -16,7 +16,7 @@ class NeuralNetwork(object):
         for layer_size in hidden_layer_sizes:
             # Add hidden layer with RELU activation.
             prev_layer = self._add_layer(prev_layer, input_size, layer_size,
-                                         tf.nn.tanh)
+                                         tf.nn.relu)
             input_size = layer_size
 
         # Add output layer with linear activation.
@@ -71,7 +71,7 @@ class NeuralNetwork(object):
 class Controller(object):
 
     def __init__(self):
-        self._nn = NeuralNetwork(9, 1, [5])
+        self._nn = NeuralNetwork(16, 1, [12, 12, 12])
 
     def evaluate(self, x):
         return self._nn.evaluate(x)

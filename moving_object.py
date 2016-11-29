@@ -168,7 +168,7 @@ class Robot(MovingObject):
 
     """Robot."""
 
-    def __init__(self, velocity=25.0, scale=0.15, model="A10.obj"):
+    def __init__(self, target, velocity=25.0, scale=0.15, model="A10.obj"):
         """Constructs a Robot.
 
         Args:
@@ -176,6 +176,7 @@ class Robot(MovingObject):
             scale: Scale of the model.
             model: Object model to use.
         """
+        self.target = target
         t = vtk.vtkTransform()
         t.Scale(scale, scale, scale)
         polydata = ioUtils.readPolyData(model)
@@ -192,7 +193,8 @@ class Robot(MovingObject):
         super(Robot, self).move(dt)
         collided = self._sensors[0].has_collided()
         state = self._sensors[0].distances
-        self._nn.train(state, [0 if collided else state[4]])
+        reward = [-1 if collided else max(0, state[0])]
+        self._nn.train(state, reward)
 
     def _get_rotated_distances(self, rot):
         distances = self._sensors[0].distances
@@ -209,17 +211,17 @@ class Robot(MovingObject):
         Returns:
             Yaw.
         """
-        actions = [-np.pi / 2, -np.pi / 4, 0., np.pi / 4, np.pi / 2]
+        actions = [-np.pi / 4, -np.pi / 8, 0., np.pi / 8, np.pi / 4]
         rotations = [-2, -1, 0, 1, 2]
 
         utilities = [
             (a, self._nn.evaluate(self._get_rotated_distances(rotations[i])))
             for i, a in enumerate(actions)
         ]
-        optimal_a, optimal_utility = max(utilities, key=lambda x: x[1])
+        optimal_a, optimal_utility = max(utilities, key=lambda x: x[1][0])
         # if np.random.random_sample() > 0.8:
             # self._action_taken = actions[0]
-        print(optimal_a, optimal_utility, self._get_rotated_distances(0).tolist())
+        print(optimal_a, optimal_utility[0])
         return optimal_a
 
 

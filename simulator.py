@@ -35,8 +35,8 @@ class Simulator(object):
     def _initialize(self):
         """Initializes the world."""
         # Add world to view.
-        om.removeFromObjectModel(om.findObjectByName("world"))
-        vis.showPolyData(self._world.to_polydata(), "world")
+        # om.removeFromObjectModel(om.findObjectByName("world"))
+        # vis.showPolyData(self._world.to_polydata(), "world")
 
     def _add_polydata(self, polydata, frame_name, color):
         """Adds polydata to the simulation.
@@ -105,7 +105,7 @@ class Simulator(object):
         """Updates cell locator."""
         d = DebugData()
 
-        d.addPolyData(self._world.to_polydata())
+        # d.addPolyData(self._world.to_polydata())
         for obstacle, frame in self._obstacles:
             d.addPolyData(obstacle.to_positioned_polydata())
 
@@ -155,11 +155,11 @@ class Simulator(object):
 if __name__ == "__main__":
     world = World(120, 100)
     sim = Simulator(world)
-    for obstacle in world.generate_obstacles(moving_obstacle_ratio=0.2):
+    for obstacle in world.generate_obstacles(0.01, moving_obstacle_ratio=0):
         sim.add_obstacle(obstacle)
     sim.update_locator()
 
-    robot = Robot()
+    robot = Robot(target=(60, 70))
     robot.attach_sensor(RaySensor())
     sim.add_robot(robot)
     sim.run()
