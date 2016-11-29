@@ -91,3 +91,8 @@ ENV/
 # Cache
 *~
 .DS_Store
+
+# Models
+*.ckpt
+*.ckpt.meta
+checkpoint
