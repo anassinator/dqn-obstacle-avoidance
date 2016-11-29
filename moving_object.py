@@ -213,8 +213,8 @@ class Robot(MovingObject):
 
     def _get_state(self, action=0, rotation=0):
         dx, dy = self._target[0] - self.x, self._target[1] - self.y
-        dtheta = abs(self._wrap_angles(action - self._angle_to_destination()))
-        return np.hstack([[dx / 1000, dy / 1000, dtheta], self._get_rotated_distances(rotation)])
+        dtheta = self._wrap_angles(action - self._angle_to_destination())
+        return [dx / 1000, dy / 1000, dtheta]
 
     def _control(self, state, t):
         """Returns the yaw given state.
@@ -227,9 +227,8 @@ class Robot(MovingObject):
             Yaw.
         """
         actions = [-np.pi / 2, -np.pi / 4, -np.pi / 8, 0., np.pi / 8, np.pi / 4, np.pi / 2]
-        rotations = [4, 2, 1, 0, -1, -2, -4]
         states = [
-            self._get_state(actions[i], rotations[i])
+            self._get_state(actions[i])
             for i in range(len(actions))
         ]
 

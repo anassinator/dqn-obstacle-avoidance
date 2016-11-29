@@ -157,6 +157,16 @@ class Simulator(object):
             for sensor in robot.sensors:
                 frame_name = "rays{}".format(i)
                 self._update_sensor(sensor, frame_name)
+                if sensor.has_collided():
+                    self.complete()
+
+            if (abs(robot.x - robot._target[0]) <= 10 and
+                    abs(robot.y - robot._target[1]) <= 10):
+                self.complete()
+
+    def complete(self):
+        self._app.exit()
+        applogic.quit()
 
 
 if __name__ == "__main__":
@@ -166,10 +176,13 @@ if __name__ == "__main__":
         sim.add_obstacle(obstacle)
     sim.update_locator()
 
-    target = (600, -370)
+    target = (-400, -370)
 
     sim.add_target(target)
     robot = Robot(target=target)
     robot.attach_sensor(RaySensor())
     sim.add_robot(robot)
+
+    robot._nn._nn.load()
     sim.run()
+    robot._nn._nn.save()
