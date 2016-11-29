@@ -193,7 +193,9 @@ class Robot(MovingObject):
         super(Robot, self).move(dt)
         collided = self._sensors[0].has_collided()
         state = self._get_state()
-        reward = [-10 if collided else -abs(self._angle_to_destination())]
+        dx, dy = self._target[0] - self.x, self._target[1] - self.y
+        distance = (dx / 1000) ** 2 + (dy / 1000) ** 2
+        reward = [-10 if collided else -distance - abs(self._angle_to_destination())]
         print(np.degrees(self._angle_to_destination()))
         self._nn.train(state, reward)
 
@@ -210,8 +212,9 @@ class Robot(MovingObject):
         return rotated_distances
 
     def _get_state(self, action=0, rotation=0):
-        return np.hstack([[abs(self._wrap_angles(action - self._angle_to_destination()))],
-                           self._get_rotated_distances(rotation)])
+        dx, dy = self._target[0] - self.x, self._target[1] - self.y
+        dtheta = abs(self._wrap_angles(action - self._angle_to_destination()))
+        return np.hstack([[dx / 1000, dy / 1000, dtheta], self._get_rotated_distances(rotation)])
 
     def _control(self, state, t):
         """Returns the yaw given state.
