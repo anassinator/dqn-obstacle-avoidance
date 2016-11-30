@@ -142,7 +142,7 @@ class Simulator(object):
     def tick(self):
         """Update simulation clock."""
         self._tick_count += 1
-        if self._tick_count >= 1000:
+        if self._tick_count >= 500:
             print("timeout")
             for robot, frame in self._robots:
                 self.reset(robot, frame)
@@ -170,6 +170,7 @@ class Simulator(object):
                     self.reset(robot, frame)
 
             if robot.at_target():
+                self._tick_count = 0
                 robot._target = self.generate_position()
                 self.add_target(robot._target)
 
