@@ -131,6 +131,7 @@ class Simulator(object):
         applogic.resetCamera(viewDirection=[0.2, 0, -1])
 
         # Set timer.
+        self._tick_count = 0
         self._timer = TimerCallback(targetFps=30)
         self._timer.callback = self.tick
         self._timer.start()
@@ -139,6 +140,12 @@ class Simulator(object):
 
     def tick(self):
         """Update simulation clock."""
+        self._tick_count += 1
+        if self._tick_count >= 500:
+            print("timeout")
+            for robot, frame in self._robots:
+                self.complete(robot, frame)
+
         need_update = False
         for obstacle, frame in self._obstacles:
             if obstacle.velocity != 0.:
@@ -167,6 +174,7 @@ class Simulator(object):
 
     def complete(self, robot, frame_name):
         # Reset.
+        self._tick_count = 0
         robot.x, robot.y, robot.theta = -30, -47, 0
         self._update_moving_object(robot, frame_name)
         robot._nn._nn.save()
