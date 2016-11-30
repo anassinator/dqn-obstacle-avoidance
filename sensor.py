@@ -10,7 +10,7 @@ class RaySensor(object):
 
     """Ray sensor."""
 
-    def __init__(self, num_rays=16, radius=20, min_angle=0, max_angle=360):
+    def __init__(self, num_rays=16, radius=20, min_angle=-45, max_angle=45):
         """Constructs a RaySensor.
 
         Args:
@@ -90,7 +90,7 @@ class RaySensor(object):
             theta: Yaw.
         """
         r = self._radius
-        angle_step = (self._max_angle - self._min_angle) / self._num_rays
+        angle_step = (self._max_angle - self._min_angle) / (self._num_rays - 1)
         self._rays = [
             np.array([
                 r * math.cos(theta + self._min_angle + i * angle_step),

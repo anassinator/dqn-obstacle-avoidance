@@ -163,7 +163,7 @@ class Robot(MovingObject):
 
     """Robot."""
 
-    def __init__(self, target, velocity=25.0, scale=0.15, model="A10.obj"):
+    def __init__(self, target, velocity=25.0, scale=0.15, exploration=0.8, model="A10.obj"):
         """Constructs a Robot.
 
         Args:
@@ -172,6 +172,7 @@ class Robot(MovingObject):
             model: Object model to use.
         """
         self._target = target
+        self._exploration = exploration
         t = vtk.vtkTransform()
         t.Scale(scale, scale, scale)
         polydata = ioUtils.readPolyData(model)
@@ -232,7 +233,7 @@ class Robot(MovingObject):
 
         utilities = self._nn.evaluate(self._get_state())
         optimal_i = np.argmax(utilities)
-        if np.random.random() >= 0.5:
+        if np.random.random() >= self._exploration:
            optimal_i = np.random.choice([0, 1, 2, 3, 4, 5, 6])
 
         optimal_a = actions[optimal_i]
