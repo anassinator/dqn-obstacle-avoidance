@@ -166,14 +166,12 @@ class Simulator(object):
                 self._update_sensor(sensor, frame_name)
                 if sensor.has_collided():
                     print("collided", min(d for d in sensor._distances if d > 0))
-                    self.complete(robot, frame)
+                    self.reset(robot, frame)
 
-            if (abs(robot.x - robot._target[0]) <= 3 and
-                    abs(robot.y - robot._target[1]) <= 3):
-                self.complete(robot, frame)
+            if robot.at_target():
+                self.reset(robot, frame)
 
-    def complete(self, robot, frame_name):
-        # Reset.
+    def reset(self, robot, frame_name):
         self._tick_count = 0
         robot.x, robot.y, robot.theta = -30, -47, 0
         self._update_moving_object(robot, frame_name)
@@ -195,6 +193,6 @@ if __name__ == "__main__":
     robot.attach_sensor(RaySensor())
     sim.add_robot(robot)
 
-    robot._nn._nn.load()
+    # robot._nn._nn.load()
     sim.run()
     robot._nn._nn.save()

@@ -198,6 +198,18 @@ class Robot(MovingObject):
                    for i in range(len(next_utilities))]
         self._nn.train(prev_state, rewards)
 
+    def at_target(self, threshold=3):
+        """Return whether the robot has reached its target.
+
+        Args:
+            threshold: Target distance threshold.
+
+        Returns:
+            True if target is reached.
+        """
+        return (abs(self._state[0] - self._target[0]) <= threshold and
+                abs(self._state[1] - self._target[1]) <= threshold)
+
     def _get_reward(self):
         dx, dy = self._target[0] - self.x, self._target[1] - self.y
         distance = (dx / 1000) ** 2 + (dy / 1000) ** 2
@@ -234,7 +246,7 @@ class Robot(MovingObject):
         utilities = self._nn.evaluate(self._get_state())
         optimal_i = np.argmax(utilities)
         if np.random.random() >= self._exploration:
-           optimal_i = np.random.choice([0, 1, 2, 3, 4, 5, 6])
+            optimal_i = np.random.choice([0, 1, 2, 3, 4, 5, 6])
 
         optimal_a = actions[optimal_i]
         self._selected_i = optimal_i
