@@ -2,7 +2,6 @@
 
 import numpy as np
 from net import Controller
-from scipy import integrate
 from director import vtkAll as vtk
 from director.debugVis import DebugData
 from director import ioUtils, filterUtils
@@ -98,7 +97,7 @@ class MovingObject(object):
         dqdt[0] = self._velocity * np.cos(state[2])
         dqdt[1] = self._velocity * np.sin(state[2])
         dqdt[2] = self._control(state, t)
-        return dqdt
+        return dqdt * t
 
     def _control(self, state, t):
         """Returns the yaw given state.
@@ -110,23 +109,18 @@ class MovingObject(object):
         Returns:
             Yaw.
         """
-        return self._velocity * np.sin(2 * np.pi * t)
+        raise NotImplementedError
 
-    def _simulate(self, dt, start_time=0.0, steps=1):
+    def _simulate(self, dt):
         """Simulates the object moving.
 
         Args:
             dt: Time between steps.
-            start_time: Start time to use, default: 0.
-            steps: Number of steps, default: 1.
 
         Returns:
             State for each step taken.
         """
-        t = np.arange(start_time, start_time + (steps + 1) * dt, dt)
-        print(t)
-        states = integrate.odeint(self._dynamics, self._state, t)
-        return states
+        return self._state + self._dynamics(self._state, dt)
 
     def move(self, dt=1.0/30.0):
         """Moves the object by a given time step.
@@ -134,8 +128,8 @@ class MovingObject(object):
         Args:
             dt: Length of time step.
         """
-        states = self._simulate(dt)
-        self._update_state(states[-1, :])
+        state = self._simulate(dt)
+        self._update_state(state)
         list(map(lambda s: s.update(*self._state), self._sensors))
 
     def _update_state(self, next_state):
@@ -197,10 +191,9 @@ class Robot(MovingObject):
         super(Robot, self).move(dt)
         next_state = self._get_state()
         next_utilities = self._nn.evaluate(next_state)
-        max_i = np.argmax(next_utilities)
-        print(next_utilities, max_i, next_utilities[max_i])
+        print(self._selected_i, next_utilities[self._selected_i])
         rewards = [self._get_reward() + gamma * next_utilities[i]
-                   if i == max_i else prev_utilites[i]
+                   if i == self._selected_i else prev_utilites[i]
                    for i in range(len(next_utilities))]
         self._nn.train(prev_state, rewards)
 
@@ -208,7 +201,7 @@ class Robot(MovingObject):
         dx, dy = self._target[0] - self.x, self._target[1] - self.y
         distance = (dx / 1000) ** 2 + (dy / 1000) ** 2
         if self._sensors[0].has_collided():
-            return [-10]
+            return [-15]
         else:
             return [-distance - abs(self._angle_to_destination())]
 
@@ -239,8 +232,11 @@ class Robot(MovingObject):
 
         utilities = self._nn.evaluate(self._get_state())
         optimal_i = np.argmax(utilities)
-        optimal_a, optimal_utility = actions[optimal_i], utilities[optimal_i]
-        print(optimal_a, optimal_utility)
+        if np.random.random() >= 0.5:
+           optimal_i = np.random.choice([0, 1, 2, 3, 4, 5, 6])
+
+        optimal_a = actions[optimal_i]
+        self._selected_i = optimal_i
         return optimal_a
 
 
