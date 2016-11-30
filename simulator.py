@@ -3,6 +3,7 @@
 import numpy as np
 from world import World
 from PythonQt import QtGui
+from net import Controller
 from sensor import RaySensor
 from director import applogic
 from moving_object import Robot
@@ -171,8 +172,10 @@ class Simulator(object):
 
             if robot.at_target():
                 self._tick_count = 0
-                robot._target = self.generate_position()
-                self.add_target(robot._target)
+                new_target = self.generate_position()
+                for robot, frame in self._robots:
+                    robot.set_target(new_target)
+                self.add_target(new_target)
 
     def generate_position(self):
         return tuple(np.random.uniform(-90, 90, 2))
@@ -188,23 +191,28 @@ class Simulator(object):
         self._tick_count = 0
         self.set_safe_position(robot)
         self._update_moving_object(robot, frame_name)
-        robot._nn._nn.save()
+        robot._ctrl._nn.save()
 
 
 if __name__ == "__main__":
     world = World(200, 200)
     sim = Simulator(world)
-    for obstacle in world.generate_obstacles(0.005, moving_obstacle_ratio=0.0):
+    for obstacle in world.generate_obstacles(0.01, moving_obstacle_ratio=0.1):
         sim.add_obstacle(obstacle)
     sim.update_locator()
 
     target = sim.generate_position()
     sim.add_target(target)
-    robot = Robot(target=target)
+
+    controller = Controller()
+    controller._nn.load()
+
+    robot = Robot()
+    robot.set_target(target)
     robot.attach_sensor(RaySensor())
+    robot.set_controller(controller)
     sim.set_safe_position(robot)
     sim.add_robot(robot)
 
-    robot._nn._nn.load()
     sim.run()
-    robot._nn._nn.save()
+    controller._nn.save()
