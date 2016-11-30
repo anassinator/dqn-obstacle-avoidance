@@ -115,10 +115,10 @@ class MovingObject(object):
         """Simulates the object moving.
 
         Args:
-            dt: Time between steps.
+            dt: Time length of step.
 
         Returns:
-            State for each step taken.
+            New state.
         """
         return self._state + self._dynamics(self._state, dt)
 
