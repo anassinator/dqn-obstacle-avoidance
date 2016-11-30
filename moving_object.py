@@ -215,6 +215,8 @@ class Robot(MovingObject):
         distance = (dx / 1000) ** 2 + (dy / 1000) ** 2
         if self._sensors[0].has_collided():
             return [-15]
+        elif self.at_target():
+            return [15]
         else:
             return [-distance - abs(self._angle_to_destination())]
 
