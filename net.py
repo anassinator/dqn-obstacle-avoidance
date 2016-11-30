@@ -82,7 +82,7 @@ class NeuralNetwork(object):
 class Controller(object):
 
     def __init__(self):
-        self._nn = NeuralNetwork(19, 7, [13])
+        self._nn = NeuralNetwork(19, 7, [13, 10])
 
     def evaluate(self, x):
         return self._nn.evaluate(x)
