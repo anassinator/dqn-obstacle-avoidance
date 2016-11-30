@@ -144,7 +144,7 @@ class Simulator(object):
         if self._tick_count >= 500:
             print("timeout")
             for robot, frame in self._robots:
-                self.complete(robot, frame)
+                self.reset(robot, frame)
 
         need_update = False
         for obstacle, frame in self._obstacles:
@@ -193,6 +193,6 @@ if __name__ == "__main__":
     robot.attach_sensor(RaySensor())
     sim.add_robot(robot)
 
-    # robot._nn._nn.load()
+    robot._nn._nn.load()
     sim.run()
     robot._nn._nn.save()
