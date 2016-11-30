@@ -89,3 +89,9 @@ class Controller(object):
 
     def train(self, x, actual):
         self._nn.train(x, actual)
+
+    def load(self):
+        self._nn.load()
+
+    def save(self):
+        self._nn.save()

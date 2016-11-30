@@ -191,7 +191,7 @@ class Simulator(object):
         self._tick_count = 0
         self.set_safe_position(robot)
         self._update_moving_object(robot, frame_name)
-        robot._ctrl._nn.save()
+        robot._ctrl.save()
 
 
 if __name__ == "__main__":
@@ -199,13 +199,14 @@ if __name__ == "__main__":
     sim = Simulator(world)
     for obstacle in world.generate_obstacles(0.01, moving_obstacle_ratio=0.1):
         sim.add_obstacle(obstacle)
+
     sim.update_locator()
 
     target = sim.generate_position()
     sim.add_target(target)
 
     controller = Controller()
-    controller._nn.load()
+    controller.load()
 
     robot = Robot()
     robot.set_target(target)
@@ -215,4 +216,4 @@ if __name__ == "__main__":
     sim.add_robot(robot)
 
     sim.run()
-    controller._nn.save()
+    controller.save()
