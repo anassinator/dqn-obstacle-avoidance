@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import os
 import tensorflow as tf
 
 
@@ -71,12 +72,13 @@ class NeuralNetwork(object):
 
     def save(self, save_path="model.ckpt"):
         save_path = self._saver.save(self._session, save_path)
-        print("Model saved in file: %s" % save_path)
+        print("model saved to file: {}".format(save_path))
 
-    def load(self, save_path="model.ckpt"):
-        self._session = tf.Session()
-        self._saver.restore(self._session, save_path)
-        print("Model restored.")
+    def load(self, load_path="model.ckpt"):
+        if os.path.exists(load_path):
+            self._session = tf.Session()
+            self._saver.restore(self._session, load_path)
+            print("model restored from: {}".format(load_path))
 
 
 class Controller(object):
