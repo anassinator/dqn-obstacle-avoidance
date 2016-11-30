@@ -130,7 +130,6 @@ class MovingObject(object):
         """
         state = self._simulate(dt)
         self._update_state(state)
-        list(map(lambda s: s.update(*self._state), self._sensors))
 
     def _update_state(self, next_state):
         """Updates the moving object's state.
@@ -143,6 +142,7 @@ class MovingObject(object):
         t.RotateZ(np.degrees(next_state[2]))
         self._polydata = filterUtils.transformPolyData(self._raw_polydata, t)
         self._state = next_state
+        list(map(lambda s: s.update(*self._state), self._sensors))
 
     def to_positioned_polydata(self):
         """Converts object to visualizable poly data.
@@ -163,12 +163,14 @@ class Robot(MovingObject):
 
     """Robot."""
 
-    def __init__(self, target, velocity=25.0, scale=0.15, exploration=0.8, model="A10.obj"):
+    def __init__(self, target, velocity=25.0, scale=0.15, exploration=0.5,
+                 model="A10.obj"):
         """Constructs a Robot.
 
         Args:
             velocity: Velocity of the robot in the forward direction.
             scale: Scale of the model.
+            exploration: Exploration rate.
             model: Object model to use.
         """
         self._target = target
@@ -214,7 +216,7 @@ class Robot(MovingObject):
         dx, dy = self._target[0] - self.x, self._target[1] - self.y
         distance = (dx / 1000) ** 2 + (dy / 1000) ** 2
         if self._sensors[0].has_collided():
-            return [-15]
+            return [-100]
         elif self.at_target():
             return [15]
         else:
