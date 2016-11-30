@@ -61,7 +61,7 @@ class World(object):
 
         bounds = self._x_min, self._x_max, self._y_min, self._y_max
         while obstacle_area > 0:
-            radius = np.random.uniform(0.4, 2.0)
+            radius = np.random.uniform(1.0, 3.0)
             center_x_range = (self._x_min + radius, self._x_max - radius)
             center_y_range = (self._y_min + radius, self._y_max - radius)
             center_x = np.random.uniform(*center_x_range)
