@@ -96,3 +96,6 @@ ENV/
 *.ckpt
 *.ckpt.meta
 checkpoint
+
+# Logs
+logs/*

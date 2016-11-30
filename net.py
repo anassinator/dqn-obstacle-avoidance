@@ -25,15 +25,36 @@ class NeuralNetwork(object):
 
         # Set up trainer.
         self._y_truth = tf.placeholder(dtype, [None, output_size])
-        loss = tf.reduce_mean(tf.square(self._y_truth - self._y)) / 2
+        with tf.name_scope("error"):
+            loss = tf.reduce_mean(tf.square(self._y_truth - self._y)) / 2
+            tf.scalar_summary("error", loss)
+            self.variable_summaries(loss)
         optimizer = tf.train.GradientDescentOptimizer(0.01)
         self._trainer = optimizer.minimize(loss)
 
         # Set up session.
         self._session = tf.Session()
+
+        # Set up summaries.
+        self._summaries = tf.merge_all_summaries()
+        self._train_writer = tf.train.SummaryWriter("logs/train",
+                                              self._session.graph)
+        self._test_writer = tf.train.SummaryWriter("logs/test",
+                                                   self._session.graph)
         self._session.run(tf.initialize_all_variables())
 
+        # Set up saver.
         self._saver = tf.train.Saver()
+
+    def variable_summaries(self, var):
+        mean = tf.reduce_mean(var)
+        tf.scalar_summary("mean", mean)
+        with tf.name_scope("stddev"):
+            stddev = tf.sqrt(tf.reduce_mean(tf.square(var - mean)))
+        tf.scalar_summary("stddev", stddev)
+        tf.scalar_summary("max", tf.reduce_max(var))
+        tf.scalar_summary("min", tf.reduce_min(var))
+        tf.histogram_summary("histogram", var)
 
     def _add_layer(self, prev_layer, input_size, output_size, activation):
         # Build layer.
@@ -66,8 +87,9 @@ class NeuralNetwork(object):
         self.train_many([x], [y])
 
     def train_many(self, xs, ys):
-        self._session.run(self._trainer,
-                          feed_dict={self._x: xs, self._y_truth: ys})
+        summ, _ = self._session.run([self._summaries, self._trainer],
+                                    feed_dict={self._x: xs, self._y_truth: ys})
+        self._train_writer.add_summary(summ)
 
     def save(self, save_path="model.ckpt"):
         save_path = self._saver.save(self._session, save_path)
