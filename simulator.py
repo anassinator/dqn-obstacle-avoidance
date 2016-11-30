@@ -60,6 +60,7 @@ class Simulator(object):
         center = [target[0], target[1], 1]
         axis = [0, 0, 1]  # Upright cylinder.
         data.addCylinder(center, axis, 2, 3)
+        om.removeFromObjectModel(om.findObjectByName("target"))
         self._add_polydata(data.getPolyData(), "target", [0, 0.8, 0])
 
     def add_robot(self, robot):
@@ -132,7 +133,7 @@ class Simulator(object):
 
         # Set timer.
         self._tick_count = 0
-        self._timer = TimerCallback(targetFps=30)
+        self._timer = TimerCallback(targetFps=120)
         self._timer.callback = self.tick
         self._timer.start()
 
@@ -141,7 +142,7 @@ class Simulator(object):
     def tick(self):
         """Update simulation clock."""
         self._tick_count += 1
-        if self._tick_count >= 500:
+        if self._tick_count >= 1000:
             print("timeout")
             for robot, frame in self._robots:
                 self.reset(robot, frame)
@@ -169,11 +170,22 @@ class Simulator(object):
                     self.reset(robot, frame)
 
             if robot.at_target():
-                self.reset(robot, frame)
+                robot._target = self.generate_position()
+                self.add_target(robot._target)
+
+    def generate_position(self):
+        return tuple(np.random.uniform(-90, 90, 2))
+
+    def set_safe_position(self, robot):
+        while True:
+            robot.x, robot.y = self.generate_position()
+            robot.theta = np.random.uniform(0, 2 * np.pi)
+            if min(robot.sensors[0].distances) >= 0.30:
+                return
 
     def reset(self, robot, frame_name):
         self._tick_count = 0
-        robot.x, robot.y, robot.theta = -30, -47, 0
+        self.set_safe_position(robot)
         self._update_moving_object(robot, frame_name)
         robot._nn._nn.save()
 
@@ -181,16 +193,15 @@ class Simulator(object):
 if __name__ == "__main__":
     world = World(200, 200)
     sim = Simulator(world)
-    for obstacle in world.generate_obstacles(0.01, moving_obstacle_ratio=0):
+    for obstacle in world.generate_obstacles(0.005, moving_obstacle_ratio=0.0):
         sim.add_obstacle(obstacle)
     sim.update_locator()
 
-    target = (40, 37)
-
+    target = sim.generate_position()
     sim.add_target(target)
     robot = Robot(target=target)
-    robot.x, robot.y = -30, -47
     robot.attach_sensor(RaySensor())
+    sim.set_safe_position(robot)
     sim.add_robot(robot)
 
     robot._nn._nn.load()
