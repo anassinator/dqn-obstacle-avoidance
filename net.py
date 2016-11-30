@@ -26,7 +26,7 @@ class NeuralNetwork(object):
         # Set up trainer.
         self._y_truth = tf.placeholder(dtype, [None, output_size])
         loss = tf.reduce_mean(tf.square(self._y_truth - self._y)) / 2
-        optimizer = tf.train.GradientDescentOptimizer(0.1)
+        optimizer = tf.train.GradientDescentOptimizer(0.01)
         self._trainer = optimizer.minimize(loss)
 
         # Set up session.
