@@ -37,7 +37,7 @@ class NeuralNetwork(object):
 
     def _add_layer(self, prev_layer, input_size, output_size, activation):
         # Build layer.
-        W = tf.Variable(tf.random_normal([input_size, output_size]))
+        W = tf.Variable(tf.truncated_normal([input_size, output_size]))
         b = tf.Variable(tf.zeros([output_size]))
         out = activation(tf.matmul(prev_layer, W) + b)
 
