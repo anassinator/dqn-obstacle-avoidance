@@ -195,8 +195,13 @@ class Robot(MovingObject):
         next_state = self._get_state()
         next_utilities = self._nn.evaluate(next_state)
         print(self._selected_i, next_utilities[self._selected_i])
-        rewards = [self._get_reward() + gamma * next_utilities[i]
-                   if i == self._selected_i else prev_utilites[i]
+
+        terminal = self._sensors[0].has_collided()
+        curr_reward = self._get_reward()
+        total_reward =\
+            curr_reward if terminal else \
+            curr_reward + gamma * next_utilities[self._selected_i]
+        rewards = [total_reward if i == self._selected_i else prev_utilites[i]
                    for i in range(len(next_utilities))]
         self._nn.train(prev_state, rewards)
 
@@ -216,11 +221,11 @@ class Robot(MovingObject):
         dx, dy = self._target[0] - self.x, self._target[1] - self.y
         distance = (dx / 1000) ** 2 + (dy / 1000) ** 2
         if self._sensors[0].has_collided():
-            return [-100]
+            return -100
         elif self.at_target():
-            return [15]
+            return 15
         else:
-            return [-distance - abs(self._angle_to_destination())]
+            return -distance - abs(self._angle_to_destination())
 
     def _angle_to_destination(self):
         x, y = self._target[0] - self.x, self._target[1] - self.y
