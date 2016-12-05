@@ -163,7 +163,7 @@ class Robot(MovingObject):
 
     """Robot."""
 
-    def __init__(self, velocity=25.0, scale=0.15, exploration=0.5,
+    def __init__(self, velocity=25.0, scale=0.15, exploration=0.9,
                  model="A10.obj"):
         """Constructs a Robot.
 
@@ -189,19 +189,21 @@ class Robot(MovingObject):
             dt: Length of time step.
         """
         gamma = 0.9
+        prev_xy = self._state[0], self._state[1]
         prev_state = self._get_state()
-        prev_utilites = self._ctrl.evaluate(prev_state)
+        prev_utilities = self._ctrl.evaluate(prev_state)
         super(Robot, self).move(dt)
         next_state = self._get_state()
         next_utilities = self._ctrl.evaluate(next_state)
-        print(self._selected_i, next_utilities[self._selected_i])
+        print("action: {}, utility: {}".format(
+            self._selected_i, prev_utilities[self._selected_i]))
 
         terminal = self._sensors[0].has_collided()
-        curr_reward = self._get_reward()
+        curr_reward = self._get_reward(prev_xy)
         total_reward =\
             curr_reward if terminal else \
             curr_reward + gamma * next_utilities[self._selected_i]
-        rewards = [total_reward if i == self._selected_i else prev_utilites[i]
+        rewards = [total_reward if i == self._selected_i else prev_utilities[i]
                    for i in range(len(next_utilities))]
         self._ctrl.train(prev_state, rewards)
 
@@ -223,15 +225,19 @@ class Robot(MovingObject):
         return (abs(self._state[0] - self._target[0]) <= threshold and
                 abs(self._state[1] - self._target[1]) <= threshold)
 
-    def _get_reward(self):
-        dx, dy = self._target[0] - self.x, self._target[1] - self.y
-        distance = (dx / 1000) ** 2 + (dy / 1000) ** 2
+    def _get_reward(self, prev_state):
+        prev_dx = self._target[0] - prev_state[0]
+        prev_dy = self._target[1] - prev_state[1]
+        prev_distance = np.sqrt(prev_dx ** 2 + prev_dy ** 2)
+        new_dx = self._target[0] - self._state[0]
+        new_dy = self._target[1] - self._state[1]
+        new_distance = np.sqrt(new_dx ** 2 + new_dy ** 2)
         if self._sensors[0].has_collided():
             return -20
         elif self.at_target():
             return 15
         else:
-            return -distance - abs(self._angle_to_destination())
+            return prev_distance - new_distance
 
     def _angle_to_destination(self):
         x, y = self._target[0] - self.x, self._target[1] - self.y
@@ -255,13 +261,12 @@ class Robot(MovingObject):
         Returns:
             Yaw.
         """
-        actions = [-np.pi / 2, -np.pi / 4, -np.pi / 8, 0.,
-                   np.pi / 8, np.pi / 4, np.pi / 2]
+        actions = [-np.pi/2, 0., np.pi/2]
 
         utilities = self._ctrl.evaluate(self._get_state())
         optimal_i = np.argmax(utilities)
         if np.random.random() >= self._exploration:
-            optimal_i = np.random.choice([0, 1, 2, 3, 4, 5, 6])
+            optimal_i = np.random.choice([0, 1, 2])
 
         optimal_a = actions[optimal_i]
         self._selected_i = optimal_i
