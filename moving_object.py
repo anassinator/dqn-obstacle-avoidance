@@ -163,7 +163,7 @@ class Robot(MovingObject):
 
     """Robot."""
 
-    def __init__(self, velocity=25.0, scale=0.15, exploration=0.9,
+    def __init__(self, velocity=25.0, scale=0.15, exploration=0.5,
                  model="A10.obj"):
         """Constructs a Robot.
 
@@ -237,7 +237,7 @@ class Robot(MovingObject):
         elif self.at_target():
             return 15
         else:
-            return prev_distance - new_distance
+            return -abs(self._angle_to_destination())
 
     def _angle_to_destination(self):
         x, y = self._target[0] - self.x, self._target[1] - self.y
@@ -265,7 +265,7 @@ class Robot(MovingObject):
 
         utilities = self._ctrl.evaluate(self._get_state())
         optimal_i = np.argmax(utilities)
-        if np.random.random() >= self._exploration:
+        if np.random.random() <= self._exploration:
             optimal_i = np.random.choice([0, 1, 2])
 
         optimal_a = actions[optimal_i]

@@ -213,7 +213,7 @@ class Simulator(object):
 if __name__ == "__main__":
     world = World(200, 200)
     sim = Simulator(world)
-    for obstacle in world.generate_obstacles(0.00, moving_obstacle_ratio=0.1):
+    for obstacle in world.generate_obstacles(0.00, moving_obstacle_ratio=0.0):
         sim.add_obstacle(obstacle)
 
     sim.update_locator()
