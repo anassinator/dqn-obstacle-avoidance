@@ -31,6 +31,11 @@ class Simulator(object):
         self._app = ConsoleApp()
         self._view = self._app.createView(useGrid=False)
 
+        # performance tracker
+        self._num_targets = 0
+        self._num_crashes = 0
+        self._run_ticks = 0
+
         self._initialize()
 
     def _initialize(self):
@@ -143,6 +148,7 @@ class Simulator(object):
     def tick(self):
         """Update simulation clock."""
         self._tick_count += 1
+        self._run_ticks += 1
         if self._tick_count >= 500:
             print("timeout")
             for robot, frame in self._robots:
@@ -167,10 +173,20 @@ class Simulator(object):
                 frame_name = "rays{}".format(i)
                 self._update_sensor(sensor, frame_name)
                 if sensor.has_collided():
+                    self._num_crashes += 1
                     print("collided", min(d for d in sensor._distances if d > 0))
+                    print("targets hit", self._num_targets)
+                    print("ticks lived", self._run_ticks)
+                    print("deaths", self._num_crashes)
+                    self._num_targets = 0
+                    new_target = self.generate_position()
+                    for robot, frame in self._robots:
+                        robot.set_target(new_target)
+                    self.add_target(new_target)
                     self.reset(robot, frame)
 
             if robot.at_target():
+                self._num_targets += 1
                 self._tick_count = 0
                 new_target = self.generate_position()
                 for robot, frame in self._robots:
@@ -178,7 +194,7 @@ class Simulator(object):
                 self.add_target(new_target)
 
     def generate_position(self):
-        return tuple(np.random.uniform(-90, 90, 2))
+        return tuple(np.random.uniform(-75, 75, 2))
 
     def set_safe_position(self, robot):
         while True:
@@ -197,7 +213,7 @@ class Simulator(object):
 if __name__ == "__main__":
     world = World(200, 200)
     sim = Simulator(world)
-    for obstacle in world.generate_obstacles(0.01, moving_obstacle_ratio=0.1):
+    for obstacle in world.generate_obstacles(0.00, moving_obstacle_ratio=0.1):
         sim.add_obstacle(obstacle)
 
     sim.update_locator()
