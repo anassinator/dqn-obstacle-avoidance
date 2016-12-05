@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import argparse
 import numpy as np
 from world import World
 from PythonQt import QtGui
@@ -127,15 +128,20 @@ class Simulator(object):
         self.locator.SetDataSet(d.getPolyData())
         self.locator.BuildLocator()
 
-    def run(self):
-        """Launches and displays the simulator."""
-        widget = QtGui.QWidget()
-        layout = QtGui.QVBoxLayout(widget)
-        layout.addWidget(self._view)
-        widget.showMaximized()
+    def run(self, display):
+        """Launches and displays the simulator.
 
-        # Set camera.
-        applogic.resetCamera(viewDirection=[0.2, 0, -1])
+        Args:
+            display: Displays the simulator or not.
+        """
+        if display:
+            widget = QtGui.QWidget()
+            layout = QtGui.QVBoxLayout(widget)
+            layout.addWidget(self._view)
+            widget.showMaximized()
+
+            # Set camera.
+            applogic.resetCamera(viewDirection=[0.2, 0, -1])
 
         # Set timer.
         self._tick_count = 0
@@ -210,10 +216,35 @@ class Simulator(object):
         robot._ctrl.save()
 
 
+def get_args():
+    """Gets parsed command-line arguments.
+
+    Returns:
+        Parsed command-line arguments.
+    """
+    parser = argparse.ArgumentParser(description="avoids obstacles")
+    parser.add_argument("--obstacle-density", default=0.01, type=float,
+                        help="area density of obstacles")
+    parser.add_argument("--moving-obstacle-ratio", default=0.0, type=float,
+                        help="percentage of moving obstacles")
+    parser.add_argument("--exploration", default=0.5, type=float,
+                        help="exploration rate")
+    parser.add_argument("--learning-rate", default=0.01, type=float,
+                        help="learning rate")
+    parser.add_argument("--no-display", action="store_false", default=True,
+                        help="whether to display the simulator or not",
+                        dest="display")
+
+    return parser.parse_args()
+
+
 if __name__ == "__main__":
+    args = get_args()
+
     world = World(200, 200)
     sim = Simulator(world)
-    for obstacle in world.generate_obstacles(0.00, moving_obstacle_ratio=0.0):
+    for obstacle in world.generate_obstacles(args.obstacle_density,
+                                             args.moving_obstacle_ratio):
         sim.add_obstacle(obstacle)
 
     sim.update_locator()
@@ -221,15 +252,15 @@ if __name__ == "__main__":
     target = sim.generate_position()
     sim.add_target(target)
 
-    controller = Controller()
+    controller = Controller(args.learning_rate)
     controller.load()
 
-    robot = Robot()
+    robot = Robot(exploration=args.exploration)
     robot.set_target(target)
     robot.attach_sensor(RaySensor())
     robot.set_controller(controller)
     sim.set_safe_position(robot)
     sim.add_robot(robot)
 
-    sim.run()
+    sim.run(args.display)
     controller.save()
