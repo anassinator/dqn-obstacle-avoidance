@@ -7,7 +7,7 @@ import tensorflow as tf
 class NeuralNetwork(object):
 
     def __init__(self, input_size, output_size, hidden_layer_sizes,
-                 dtype=tf.float32):
+                 learning_rate, dtype=tf.float32):
         self._x = tf.placeholder(dtype, [None, input_size])
         self._weights = []
         self._biases = []
@@ -27,7 +27,7 @@ class NeuralNetwork(object):
         # Set up trainer.
         self._y_truth = tf.placeholder(dtype, [None, output_size])
         loss = tf.reduce_mean(tf.square(self._y_truth - self._y)) / 2
-        optimizer = tf.train.GradientDescentOptimizer(0.01)
+        optimizer = tf.train.GradientDescentOptimizer(learning_rate)
         self._trainer = optimizer.minimize(loss)
 
         # Set up session.
@@ -83,8 +83,8 @@ class NeuralNetwork(object):
 
 class Controller(object):
 
-    def __init__(self):
-        self._nn = NeuralNetwork(19, 3, [11, 7])
+    def __init__(self, learning_rate=0.01):
+        self._nn = NeuralNetwork(19, 3, [11, 7], learning_rate)
 
     def evaluate(self, x):
         return self._nn.evaluate(x)
