@@ -184,6 +184,7 @@ class Simulator(object):
                     print("targets hit", self._num_targets)
                     print("ticks lived", self._run_ticks)
                     print("deaths", self._num_crashes)
+                    self._run_ticks = 0
                     self._num_targets = 0
                     new_target = self.generate_position()
                     for robot, frame in self._robots:
