@@ -237,7 +237,10 @@ class Robot(MovingObject):
         elif self.at_target():
             return 15
         else:
-            return -abs(self._angle_to_destination())
+            delta_distance = prev_distance - new_distance
+            angle_distance = -abs(self._angle_to_destination()) / 4
+            obstacle_ahead = self._sensors[0].distances[8] - 1
+            return delta_distance + angle_distance + obstacle_ahead
 
     def _angle_to_destination(self):
         x, y = self._target[0] - self.x, self._target[1] - self.y
